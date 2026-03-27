@@ -10,7 +10,7 @@ exports.NotifyCommentCreatedHandler = void 0;
 const comment_created_event_1 = require("./comment-created.event");
 const cqrs_1 = require("@nestjs/cqrs");
 let NotifyCommentCreatedHandler = class NotifyCommentCreatedHandler {
-    handle(_) { }
+    handle() { }
 };
 exports.NotifyCommentCreatedHandler = NotifyCommentCreatedHandler;
 exports.NotifyCommentCreatedHandler = NotifyCommentCreatedHandler = __decorate([

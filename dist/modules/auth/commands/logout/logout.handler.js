@@ -10,7 +10,7 @@ exports.LogoutHandler = void 0;
 const cqrs_1 = require("@nestjs/cqrs");
 const logout_command_1 = require("./logout.command");
 let LogoutHandler = class LogoutHandler {
-    async execute(_) {
+    async execute() {
         return { success: true };
     }
 };

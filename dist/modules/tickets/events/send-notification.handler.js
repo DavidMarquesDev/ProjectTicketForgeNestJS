@@ -10,7 +10,7 @@ exports.SendNotificationHandler = void 0;
 const cqrs_1 = require("@nestjs/cqrs");
 const ticket_created_event_1 = require("./ticket-created.event");
 let SendNotificationHandler = class SendNotificationHandler {
-    handle(_) { }
+    handle() { }
 };
 exports.SendNotificationHandler = SendNotificationHandler;
 exports.SendNotificationHandler = SendNotificationHandler = __decorate([
