@@ -20,11 +20,23 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
-            typeorm_1.TypeOrmModule.forRoot({
-                type: 'postgres',
-                url: process.env.DATABASE_URL,
-                autoLoadEntities: true,
-                synchronize: false,
+            typeorm_1.TypeOrmModule.forRootAsync({
+                useFactory: () => {
+                    if (process.env.DATABASE_URL) {
+                        return {
+                            type: 'postgres',
+                            url: process.env.DATABASE_URL,
+                            autoLoadEntities: true,
+                            synchronize: false,
+                        };
+                    }
+                    return {
+                        type: 'sqlite',
+                        database: 'ticketforge-local.sqlite',
+                        autoLoadEntities: true,
+                        synchronize: true,
+                    };
+                },
             }),
             auth_module_1.AuthModule,
             tickets_module_1.TicketsModule,

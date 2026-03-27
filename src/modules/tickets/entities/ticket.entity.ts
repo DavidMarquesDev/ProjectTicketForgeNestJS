@@ -21,7 +21,7 @@ export class Ticket {
     @Column({ type: 'text' })
     description: string;
 
-    @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.OPEN })
+    @Column({ type: 'simple-enum', enum: TicketStatus, default: TicketStatus.OPEN })
     status: TicketStatus;
 
     @Column({ name: 'created_by' })

@@ -29,7 +29,7 @@ __decorate([
     __metadata("design:type", String)
 ], Ticket.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: ticket_status_enum_1.TicketStatus, default: ticket_status_enum_1.TicketStatus.OPEN }),
+    (0, typeorm_1.Column)({ type: 'simple-enum', enum: ticket_status_enum_1.TicketStatus, default: ticket_status_enum_1.TicketStatus.OPEN }),
     __metadata("design:type", String)
 ], Ticket.prototype, "status", void 0);
 __decorate([

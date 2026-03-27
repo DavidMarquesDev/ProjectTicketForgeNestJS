@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import redoc from 'redoc-express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
@@ -26,6 +27,13 @@ async function bootstrap(): Promise<void> {
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs/api', app, document);
+    app.use(
+        '/docs/redoc',
+        redoc({
+            title: 'TicketForge API Docs',
+            specUrl: '/docs/api-json',
+        }),
+    );
 
     await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000);
 }

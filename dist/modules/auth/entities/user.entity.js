@@ -33,7 +33,7 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "passwordHash", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: UserRole, default: UserRole.USER }),
+    (0, typeorm_1.Column)({ type: 'simple-enum', enum: UserRole, default: UserRole.USER }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
 __decorate([
