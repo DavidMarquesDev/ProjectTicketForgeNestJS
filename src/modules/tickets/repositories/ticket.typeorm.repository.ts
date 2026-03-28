@@ -12,6 +12,8 @@ import {
 
 @Injectable()
 export class TicketTypeOrmRepository implements ITicketRepository {
+    private readonly detailedRelations = { creator: true, assignee: true } as const;
+
     constructor(
         @InjectRepository(Ticket)
         private readonly ormRepository: Repository<Ticket>,
@@ -29,7 +31,6 @@ export class TicketTypeOrmRepository implements ITicketRepository {
     async findById(ticketId: number): Promise<Ticket | null> {
         return this.ormRepository.findOne({
             where: { id: ticketId },
-            relations: { creator: true, assignee: true },
         });
     }
 
@@ -81,7 +82,7 @@ export class TicketTypeOrmRepository implements ITicketRepository {
     async findOneDetailed(ticketId: number): Promise<Ticket | null> {
         return this.ormRepository.findOne({
             where: { id: ticketId },
-            relations: { creator: true, assignee: true },
+            relations: this.detailedRelations,
         });
     }
 }

@@ -1,7 +1,7 @@
-import { ForbiddenException, Inject, NotFoundException } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UserRole } from '../../../auth/entities/user.entity';
 import { UpdateCommentCommand } from './update-comment.command';
+import { CommentPolicyService } from '../../policies/comment-policy.service';
 import { COMMENT_REPOSITORY, type ICommentRepository } from '../../repositories/comment.repository.interface';
 
 @CommandHandler(UpdateCommentCommand)
@@ -9,6 +9,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     constructor(
         @Inject(COMMENT_REPOSITORY)
         private readonly commentRepository: ICommentRepository,
+        private readonly policyService: CommentPolicyService,
     ) {}
 
     /**
@@ -25,10 +26,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
             throw new NotFoundException('Comentário não encontrado');
         }
 
-        const canUpdate = comment.authorId === command.actorId || command.actorRole === UserRole.ADMIN;
-        if (!canUpdate) {
-            throw new ForbiddenException('Usuário não possui permissão para editar comentário');
-        }
+        this.policyService.assertCanUpdate(comment, command.actorId, command.actorRole);
 
         comment.content = command.dto.content;
         const savedComment = await this.commentRepository.save(comment);

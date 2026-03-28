@@ -1,7 +1,7 @@
-import { ForbiddenException, Inject, NotFoundException } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UserRole } from '../../../auth/entities/user.entity';
 import { DeleteCommentCommand } from './delete-comment.command';
+import { CommentPolicyService } from '../../policies/comment-policy.service';
 import { COMMENT_REPOSITORY, type ICommentRepository } from '../../repositories/comment.repository.interface';
 
 @CommandHandler(DeleteCommentCommand)
@@ -9,6 +9,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
     constructor(
         @Inject(COMMENT_REPOSITORY)
         private readonly commentRepository: ICommentRepository,
+        private readonly policyService: CommentPolicyService,
     ) {}
 
     /**
@@ -25,10 +26,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
             throw new NotFoundException('Comentário não encontrado');
         }
 
-        const canDelete = comment.authorId === command.actorId || command.actorRole === UserRole.ADMIN;
-        if (!canDelete) {
-            throw new ForbiddenException('Usuário não possui permissão para excluir comentário');
-        }
+        this.policyService.assertCanDelete(comment, command.actorId, command.actorRole);
 
         await this.commentRepository.deleteById(comment.id);
 

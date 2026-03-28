@@ -14,7 +14,10 @@ describe('UpdateCommentHandler', () => {
             }),
             save: jest.fn().mockImplementation(async (comment) => comment),
         };
-        const handler = new UpdateCommentHandler(repository as never);
+        const policyService = {
+            assertCanUpdate: jest.fn(),
+        };
+        const handler = new UpdateCommentHandler(repository as never, policyService as never);
 
         const result = await handler.execute(
             new UpdateCommentCommand(
@@ -33,6 +36,11 @@ describe('UpdateCommentHandler', () => {
             authorId: 5,
             content: 'Conteúdo atualizado',
         });
+        expect(policyService.assertCanUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 1, ticketId: 10, authorId: 5 }),
+            5,
+            UserRole.USER,
+        );
     });
 
     it('deve lançar not found quando comentário não existir no ticket', async () => {
@@ -45,7 +53,10 @@ describe('UpdateCommentHandler', () => {
             }),
             save: jest.fn(),
         };
-        const handler = new UpdateCommentHandler(repository as never);
+        const policyService = {
+            assertCanUpdate: jest.fn(),
+        };
+        const handler = new UpdateCommentHandler(repository as never, policyService as never);
 
         await expect(
             handler.execute(
@@ -59,6 +70,7 @@ describe('UpdateCommentHandler', () => {
             ),
         ).rejects.toThrow(NotFoundException);
         expect(repository.save).not.toHaveBeenCalled();
+        expect(policyService.assertCanUpdate).not.toHaveBeenCalled();
     });
 
     it('deve lançar forbidden quando usuário sem permissão tentar editar', async () => {
@@ -71,7 +83,12 @@ describe('UpdateCommentHandler', () => {
             }),
             save: jest.fn(),
         };
-        const handler = new UpdateCommentHandler(repository as never);
+        const policyService = {
+            assertCanUpdate: jest.fn(() => {
+                throw new ForbiddenException('Usuário não possui permissão para editar comentário');
+            }),
+        };
+        const handler = new UpdateCommentHandler(repository as never, policyService as never);
 
         await expect(
             handler.execute(
@@ -85,5 +102,10 @@ describe('UpdateCommentHandler', () => {
             ),
         ).rejects.toThrow(ForbiddenException);
         expect(repository.save).not.toHaveBeenCalled();
+        expect(policyService.assertCanUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 1, ticketId: 10, authorId: 5 }),
+            8,
+            UserRole.SUPPORT,
+        );
     });
 });

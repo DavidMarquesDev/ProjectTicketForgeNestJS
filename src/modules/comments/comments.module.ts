@@ -9,6 +9,7 @@ import { UpdateCommentHandler } from './commands/update-comment/update-comment.h
 import { CommentsController } from './comments.controller';
 import { NotifyCommentCreatedHandler } from './events/notify-comment-created.handler';
 import { Comment } from './entities/comment.entity';
+import { CommentPolicyService } from './policies/comment-policy.service';
 import { GetCommentsHandler } from './queries/get-comments/get-comments.handler';
 import { COMMENT_REPOSITORY } from './repositories/comment.repository.interface';
 import { CommentTypeOrmRepository } from './repositories/comment.typeorm.repository';
@@ -21,6 +22,7 @@ const eventHandlers = [NotifyCommentCreatedHandler];
     imports: [CqrsModule, TypeOrmModule.forFeature([Comment]), TicketsModule, OutboxModule],
     controllers: [CommentsController],
     providers: [
+        CommentPolicyService,
         CommentTypeOrmRepository,
         {
             provide: COMMENT_REPOSITORY,
