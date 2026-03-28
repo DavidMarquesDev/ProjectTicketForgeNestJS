@@ -1,0 +1,21 @@
+import 'dotenv/config';
+import { DataSource } from 'typeorm';
+import { User } from '../modules/auth/entities/user.entity';
+import { Comment } from '../modules/comments/entities/comment.entity';
+import { Ticket } from '../modules/tickets/entities/ticket.entity';
+
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL não definida para executar migrations');
+}
+
+const migrationsPath = __filename.endsWith('.ts')
+    ? ['src/database/migrations/*.ts']
+    : ['dist/database/migrations/*.js'];
+
+export default new DataSource({
+    type: 'postgres',
+    url: process.env.DATABASE_URL,
+    entities: [User, Ticket, Comment],
+    migrations: migrationsPath,
+    synchronize: false,
+});
