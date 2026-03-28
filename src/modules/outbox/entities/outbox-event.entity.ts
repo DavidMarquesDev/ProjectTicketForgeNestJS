@@ -6,8 +6,14 @@ export class OutboxEvent {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @Column({ name: 'event_id', length: 120, unique: true })
+    eventId: string;
+
     @Column({ name: 'event_name', length: 120 })
     eventName: string;
+
+    @Column({ name: 'schema_version', type: 'int', default: 1 })
+    schemaVersion: number;
 
     @Column({ name: 'aggregate_type', length: 80 })
     aggregateType: string;

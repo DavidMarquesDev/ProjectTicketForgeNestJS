@@ -32,12 +32,30 @@ export class DomainEventsProcessor extends WorkerHost {
                     queue: DOMAIN_EVENTS_QUEUE,
                     job_id: job.id,
                     outbox_event_id: job.data.outboxEventId,
+                    event_id: job.data.eventId,
                     event_name: job.data.eventName,
+                    schema_version: job.data.schemaVersion,
                     aggregate_type: job.data.aggregateType,
                     aggregate_id: job.data.aggregateId,
                 },
             }),
         );
+
+        if (await this.outboxService.hasProcessedEventWithEventId(job.data.eventId, job.data.outboxEventId)) {
+            this.logger.log(
+                toStructuredLog({
+                    level: 'info',
+                    action: 'queue_duplicate_ignored',
+                    context: {
+                        outbox_event_id: job.data.outboxEventId,
+                        event_id: job.data.eventId,
+                        event_name: job.data.eventName,
+                    },
+                }),
+            );
+            await this.outboxService.markProcessed(job.data.outboxEventId);
+            return;
+        }
 
         if (this.isNotificationEvent(job.data.eventName)) {
             await this.notificationDispatcher.dispatch({
@@ -51,7 +69,9 @@ export class DomainEventsProcessor extends WorkerHost {
                     action: 'notification_dispatched',
                     context: {
                         outbox_event_id: job.data.outboxEventId,
+                        event_id: job.data.eventId,
                         event_name: job.data.eventName,
+                        schema_version: job.data.schemaVersion,
                         aggregate_id: job.data.aggregateId,
                     },
                 }),
@@ -102,6 +122,7 @@ export class DomainEventsProcessor extends WorkerHost {
                     queue: DOMAIN_EVENTS_QUEUE,
                     job_id: job.id,
                     outbox_event_id: job.data.outboxEventId,
+                    event_id: job.data.eventId,
                     event_name: job.data.eventName,
                     error_message: error.message,
                 },

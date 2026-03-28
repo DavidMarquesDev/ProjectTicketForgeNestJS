@@ -68,6 +68,8 @@ describe('OutboxDispatcherService smoke', () => {
 
         const pending = await outboxRepository.findOneByOrFail({ id: createdEvent.id });
         expect(pending.status).toBe(OutboxEventStatus.PENDING);
+        expect(pending.schemaVersion).toBe(1);
+        expect(pending.eventId).toBeTruthy();
 
         await dispatcher.dispatchPendingEvents();
 
@@ -81,7 +83,9 @@ describe('OutboxDispatcherService smoke', () => {
             id: createdEvent.id,
             data: {
                 outboxEventId: createdEvent.id,
+                eventId: queued.eventId,
                 eventName: queued.eventName,
+                schemaVersion: queued.schemaVersion,
                 aggregateType: queued.aggregateType,
                 aggregateId: queued.aggregateId,
                 payload: queued.payload,

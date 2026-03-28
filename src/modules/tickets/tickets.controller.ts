@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
     ApiBadRequestResponse,
@@ -48,6 +48,7 @@ import { AssignTicketDto } from './dto/assign-ticket.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { GetTicketsQueryDto } from './dto/get-tickets-query.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
+import { IdempotencyService } from '../idempotency/idempotency.service';
 import { GetTicketQuery } from './queries/get-ticket/get-ticket.query';
 import { GetTicketsQuery } from './queries/get-tickets/get-tickets.query';
 
@@ -59,6 +60,7 @@ export class TicketsController {
     constructor(
         private readonly commandBus: CommandBus,
         private readonly queryBus: QueryBus,
+        private readonly idempotencyService: IdempotencyService,
     ) {}
 
     /**
@@ -74,8 +76,17 @@ export class TicketsController {
     @ApiUnauthorizedResponse(ticketApiUnauthorizedResponse)
     @ApiBadRequestResponse(createTicketApiBadRequestResponse)
     @Post()
-    create(@Body() dto: CreateTicketDto, @CurrentUser() user: AuthenticatedUser) {
-        return this.commandBus.execute(new CreateTicketCommand(dto, user.id));
+    create(
+        @Body() dto: CreateTicketDto,
+        @CurrentUser() user: AuthenticatedUser,
+        @Headers('idempotency-key') idempotencyKey?: string,
+    ) {
+        return this.idempotencyService.execute({
+            scope: 'tickets:create',
+            actorId: user.id,
+            key: idempotencyKey,
+            action: () => this.commandBus.execute(new CreateTicketCommand(dto, user.id)),
+        });
     }
 
     /**
@@ -99,8 +110,14 @@ export class TicketsController {
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateStatusDto,
         @CurrentUser() user: AuthenticatedUser,
+        @Headers('idempotency-key') idempotencyKey?: string,
     ) {
-        return this.commandBus.execute(new UpdateStatusCommand(id, dto, user.id, user.role));
+        return this.idempotencyService.execute({
+            scope: `tickets:update-status:${id}`,
+            actorId: user.id,
+            key: idempotencyKey,
+            action: () => this.commandBus.execute(new UpdateStatusCommand(id, dto, user.id, user.role)),
+        });
     }
 
     /**
@@ -124,8 +141,14 @@ export class TicketsController {
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: AssignTicketDto,
         @CurrentUser() user: AuthenticatedUser,
+        @Headers('idempotency-key') idempotencyKey?: string,
     ) {
-        return this.commandBus.execute(new AssignTicketCommand(id, dto, user.role));
+        return this.idempotencyService.execute({
+            scope: `tickets:assign:${id}`,
+            actorId: user.id,
+            key: idempotencyKey,
+            action: () => this.commandBus.execute(new AssignTicketCommand(id, dto, user.role)),
+        });
     }
 
     /**

@@ -19,7 +19,9 @@ export class DomainEventsQueueProducer {
             PROCESS_OUTBOX_EVENT_JOB,
             {
                 outboxEventId: event.id,
+                eventId: event.eventId,
                 eventName: event.eventName,
+                schemaVersion: event.schemaVersion,
                 aggregateType: event.aggregateType,
                 aggregateId: event.aggregateId,
                 payload: event.payload,
@@ -44,7 +46,9 @@ export class DomainEventsQueueProducer {
                     queue: DOMAIN_EVENTS_QUEUE,
                     job_name: PROCESS_OUTBOX_EVENT_JOB,
                     outbox_event_id: event.id,
+                    event_id: event.eventId,
                     event_name: event.eventName,
+                    schema_version: event.schemaVersion,
                 },
             }),
         );

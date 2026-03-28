@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { OutboxModule } from '../outbox/outbox.module';
 import { TicketsModule } from '../tickets/tickets.module';
 import { CreateCommentHandler } from './commands/create-comment/create-comment.handler';
@@ -19,7 +20,7 @@ const queryHandlers = [GetCommentsHandler];
 const eventHandlers = [NotifyCommentCreatedHandler];
 
 @Module({
-    imports: [CqrsModule, TypeOrmModule.forFeature([Comment]), TicketsModule, OutboxModule],
+    imports: [CqrsModule, TypeOrmModule.forFeature([Comment]), TicketsModule, OutboxModule, IdempotencyModule],
     controllers: [CommentsController],
     providers: [
         CommentPolicyService,

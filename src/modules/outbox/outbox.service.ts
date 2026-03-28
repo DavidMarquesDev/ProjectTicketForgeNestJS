@@ -1,11 +1,14 @@
+import { randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, LessThanOrEqual, Repository } from 'typeorm';
+import { EntityManager, LessThanOrEqual, Not, Repository } from 'typeorm';
 import { OutboxEvent } from './entities/outbox-event.entity';
 import { OutboxEventStatus } from './entities/outbox-event-status.enum';
 
 type CreateOutboxEventInput = {
+    eventId?: string;
     eventName: string;
+    schemaVersion?: number;
     aggregateType: string;
     aggregateId: string;
     payload: Record<string, unknown>;
@@ -21,7 +24,9 @@ export class OutboxService {
     async createPendingEvent(input: CreateOutboxEventInput, manager?: EntityManager): Promise<OutboxEvent> {
         const repository = this.resolveRepository(manager);
         const event = repository.create({
+            eventId: input.eventId ?? randomUUID(),
             eventName: input.eventName,
+            schemaVersion: input.schemaVersion ?? 1,
             aggregateType: input.aggregateType,
             aggregateId: input.aggregateId,
             payload: JSON.stringify(input.payload),
@@ -97,6 +102,16 @@ export class OutboxService {
                 updatedAt: new Date(),
             },
         );
+    }
+
+    async hasProcessedEventWithEventId(eventId: string, outboxEventId: string): Promise<boolean> {
+        return this.outboxRepository.exists({
+            where: {
+                eventId,
+                status: OutboxEventStatus.PROCESSED,
+                id: Not(outboxEventId),
+            },
+        });
     }
 
     private resolveRepository(manager?: EntityManager): Repository<OutboxEvent> {

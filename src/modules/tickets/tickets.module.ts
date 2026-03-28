@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { OutboxModule } from '../outbox/outbox.module';
 import { AssignTicketHandler } from './commands/assign-ticket/assign-ticket.handler';
 import { CreateTicketHandler } from './commands/create-ticket/create-ticket.handler';
@@ -20,7 +21,7 @@ const queryHandlers = [GetTicketsHandler, GetTicketHandler];
 const eventHandlers = [SendNotificationHandler];
 
 @Module({
-    imports: [CqrsModule, TypeOrmModule.forFeature([Ticket]), OutboxModule],
+    imports: [CqrsModule, TypeOrmModule.forFeature([Ticket]), OutboxModule, IdempotencyModule],
     controllers: [TicketsController],
     providers: [
         TicketPolicyService,

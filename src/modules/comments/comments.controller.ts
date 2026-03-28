@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
     ApiBadRequestResponse,
@@ -46,6 +46,7 @@ import { UpdateCommentCommand } from './commands/update-comment/update-comment.c
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetCommentsQueryDto } from './dto/get-comments-query.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { IdempotencyService } from '../idempotency/idempotency.service';
 import { GetCommentsQuery } from './queries/get-comments/get-comments.query';
 
 @ApiTags('comments')
@@ -56,6 +57,7 @@ export class CommentsController {
     constructor(
         private readonly commandBus: CommandBus,
         private readonly queryBus: QueryBus,
+        private readonly idempotencyService: IdempotencyService,
     ) {}
 
     /**
@@ -78,8 +80,14 @@ export class CommentsController {
         @Param('ticketId', ParseIntPipe) ticketId: number,
         @Body() dto: CreateCommentDto,
         @CurrentUser() user: AuthenticatedUser,
+        @Headers('idempotency-key') idempotencyKey?: string,
     ) {
-        return this.commandBus.execute(new CreateCommentCommand(ticketId, user.id, dto));
+        return this.idempotencyService.execute({
+            scope: `comments:create:${ticketId}`,
+            actorId: user.id,
+            key: idempotencyKey,
+            action: () => this.commandBus.execute(new CreateCommentCommand(ticketId, user.id, dto)),
+        });
     }
 
     /**
@@ -135,10 +143,14 @@ export class CommentsController {
         @Param('id', ParseIntPipe) commentId: number,
         @Body() dto: UpdateCommentDto,
         @CurrentUser() user: AuthenticatedUser,
+        @Headers('idempotency-key') idempotencyKey?: string,
     ) {
-        return this.commandBus.execute(
-            new UpdateCommentCommand(ticketId, commentId, user.id, user.role, dto),
-        );
+        return this.idempotencyService.execute({
+            scope: `comments:update:${ticketId}:${commentId}`,
+            actorId: user.id,
+            key: idempotencyKey,
+            action: () => this.commandBus.execute(new UpdateCommentCommand(ticketId, commentId, user.id, user.role, dto)),
+        });
     }
 
     /**
@@ -162,9 +174,13 @@ export class CommentsController {
         @Param('ticketId', ParseIntPipe) ticketId: number,
         @Param('id', ParseIntPipe) commentId: number,
         @CurrentUser() user: AuthenticatedUser,
+        @Headers('idempotency-key') idempotencyKey?: string,
     ) {
-        return this.commandBus.execute(
-            new DeleteCommentCommand(ticketId, commentId, user.id, user.role),
-        );
+        return this.idempotencyService.execute({
+            scope: `comments:delete:${ticketId}:${commentId}`,
+            actorId: user.id,
+            key: idempotencyKey,
+            action: () => this.commandBus.execute(new DeleteCommentCommand(ticketId, commentId, user.id, user.role)),
+        });
     }
 }
