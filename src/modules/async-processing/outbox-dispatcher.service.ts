@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { toStructuredLog } from '../../common/logging/structured-log.helper';
+import { OperationalMetricsService } from '../../common/observability/operational-metrics.service';
 import { DeadLetterQueueProducer } from './dead-letter-queue.producer';
 import { DomainEventsQueueProducer } from './domain-events-queue.producer';
 import { OutboxService } from '../outbox/outbox.service';
@@ -18,6 +19,7 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
         private readonly outboxService: OutboxService,
         private readonly queueProducer: DomainEventsQueueProducer,
         private readonly deadLetterQueueProducer: DeadLetterQueueProducer,
+        private readonly operationalMetricsService: OperationalMetricsService,
     ) {}
 
     onModuleInit(): void {
@@ -55,6 +57,7 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
                     await this.queueProducer.enqueueOutboxEvent(pendingEvent);
                 } catch (error) {
                     const message = error instanceof Error ? error.message : 'Erro desconhecido ao enfileirar evento';
+                    this.operationalMetricsService.recordQueueFailure();
                     const failedResult = await this.outboxService.markFailed(pendingEvent.id, message);
                     if (failedResult.status === OutboxEventStatus.DEAD_LETTERED) {
                         await this.deadLetterQueueProducer.enqueue({
@@ -64,6 +67,7 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
                             schemaVersion: pendingEvent.schemaVersion,
                             aggregateType: pendingEvent.aggregateType,
                             aggregateId: pendingEvent.aggregateId,
+                            traceId: pendingEvent.traceId,
                             payload: pendingEvent.payload,
                             attempts: failedResult.attempts,
                             errorMessage: message,
@@ -71,6 +75,7 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
                     }
                 }
             }
+            this.operationalMetricsService.recordQueueDispatchBatch(pendingEvents.length);
 
             if (pendingEvents.length > 0) {
                 this.logger.log(

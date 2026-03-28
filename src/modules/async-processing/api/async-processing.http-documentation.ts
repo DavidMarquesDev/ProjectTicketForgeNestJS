@@ -61,7 +61,16 @@ export const reprocessDeadLetterApiConflictResponse = {
 
 export const listDeadLettersApiOperation = {
     summary: 'Lista eventos da dead letter queue',
-    description: 'Retorna eventos dead-lettered com paginação e filtros operacionais.',
+    description:
+        'Retorna eventos dead-lettered com paginação e filtros operacionais. O payload mascarado pode ser truncado quando exceder o limite configurado.',
+};
+
+export const listDeadLettersApiMaskModeQuery = {
+    name: 'maskMode',
+    required: false,
+    enum: ['total', 'partial'],
+    description: 'Define o modo de mascaramento do payload sensível na listagem',
+    example: 'total',
 };
 
 export const listDeadLettersApiOkResponse = {
@@ -81,6 +90,12 @@ export const listDeadLettersApiOkResponse = {
                     attempts: 5,
                     deadLetteredAt: '2026-03-28T12:30:00.000Z',
                     lastError: 'Falha final de integração',
+                    payloadMasked: {
+                        cpf: '***',
+                        email: '***',
+                        token: '***',
+                        ticketId: 101,
+                    },
                     createdAt: '2026-03-28T12:00:00.000Z',
                     updatedAt: '2026-03-28T12:30:00.000Z',
                 },
@@ -109,13 +124,22 @@ export const listDeadLettersApiBadRequestResponse = {
 
 export const getDeadLetterByIdApiOperation = {
     summary: 'Detalha evento da dead letter queue',
-    description: 'Retorna o evento dead-lettered por id com payload mascarado.',
+    description:
+        'Retorna o evento dead-lettered por id com payload mascarado. O payload mascarado pode ser truncado quando exceder o limite configurado.',
 };
 
 export const getDeadLetterByIdApiParam = {
     name: 'outboxEventId',
     description: 'Identificador UUID do evento de outbox em dead letter',
     example: 'c2b008f9-d95f-48b9-b337-378f1bfa8921',
+};
+
+export const getDeadLetterByIdApiMaskModeQuery = {
+    name: 'maskMode',
+    required: false,
+    enum: ['total', 'partial'],
+    description: 'Define o modo de mascaramento do payload sensível',
+    example: 'partial',
 };
 
 export const getDeadLetterByIdApiOkResponse = {
@@ -135,8 +159,8 @@ export const getDeadLetterByIdApiOkResponse = {
                 deadLetteredAt: '2026-03-28T12:30:00.000Z',
                 lastError: 'Falha final de integração',
                 payloadMasked: {
-                    cpf: '***',
-                    email: '***',
+                    cpf: '***8901',
+                    email: 'u***@ticketforge.dev',
                     token: '***',
                     ticketId: 101,
                 },

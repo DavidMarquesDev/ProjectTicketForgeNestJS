@@ -11,7 +11,14 @@ describe('AssignTicketHandler', () => {
         const policyService = {
             assertCanAssign: jest.fn(),
         };
-        const handler = new AssignTicketHandler(ticketRepository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new AssignTicketHandler(
+            ticketRepository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         const result = await handler.execute(
             new AssignTicketCommand(
@@ -20,11 +27,13 @@ describe('AssignTicketHandler', () => {
                     userId: 2,
                 },
                 UserRole.SUPPORT,
+                3,
             ),
         );
 
         expect(result).toEqual({ id: 1, success: true });
         expect(policyService.assertCanAssign).toHaveBeenCalledWith(UserRole.SUPPORT);
         expect(ticketRepository.assign).toHaveBeenCalledWith(1, 2);
+        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
     });
 });

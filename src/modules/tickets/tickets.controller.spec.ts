@@ -12,7 +12,17 @@ describe('TicketsController', () => {
         const idempotencyService = {
             execute: jest.fn(async (input) => input.action()),
         };
-        const controller = new TicketsController(commandBus, queryBus, idempotencyService as never);
+        const ticketReadCacheService = {
+            get: jest.fn(),
+            set: jest.fn(),
+            invalidate: jest.fn(),
+        };
+        const controller = new TicketsController(
+            commandBus,
+            queryBus,
+            idempotencyService as never,
+            ticketReadCacheService as never,
+        );
 
         const response = await controller.assign(
             10,
@@ -31,4 +41,3 @@ describe('TicketsController', () => {
         expect(commandBus.execute).toHaveBeenCalledTimes(1);
     });
 });
-

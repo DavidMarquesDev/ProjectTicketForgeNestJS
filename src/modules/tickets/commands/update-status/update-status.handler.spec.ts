@@ -28,12 +28,16 @@ describe('UpdateStatusHandler', () => {
         const outboxService = {
             createPendingEvent: jest.fn(),
         };
+        const auditTrailService = {
+            record: jest.fn(),
+        };
         const handler = new UpdateStatusHandler(
             ticketRepository as never,
             policyService as never,
             statusTransitionService as never,
             eventBus,
             outboxService as never,
+            auditTrailService as never,
         );
 
         const result = await handler.execute(
@@ -51,5 +55,6 @@ describe('UpdateStatusHandler', () => {
         expect(ticketRepository.save).toHaveBeenCalled();
         expect(eventBus.publish).toHaveBeenCalled();
         expect(outboxService.createPendingEvent).toHaveBeenCalled();
+        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
     });
 });

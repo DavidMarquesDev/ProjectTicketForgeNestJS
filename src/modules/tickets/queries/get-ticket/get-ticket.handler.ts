@@ -1,16 +1,14 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GetTicketQuery } from './get-ticket.query';
+import { mapTicketToOutputDto, TicketOutputDto } from '../../dto/ticket-output.dto';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../repositories/ticket.repository.interface';
-import { Ticket } from '../../entities/ticket.entity';
-import { TicketReadCacheService } from '../../services/ticket-read-cache.service';
 
 @QueryHandler(GetTicketQuery)
 export class GetTicketHandler implements IQueryHandler<GetTicketQuery> {
     constructor(
         @Inject(TICKET_REPOSITORY)
         private readonly ticketRepository: ITicketRepository,
-        private readonly ticketReadCacheService: TicketReadCacheService,
     ) {}
 
     /**
@@ -20,24 +18,17 @@ export class GetTicketHandler implements IQueryHandler<GetTicketQuery> {
      * @returns Detailed ticket payload.
      * @throws NotFoundException When ticket does not exist.
      */
-    async execute(query: GetTicketQuery): Promise<{ success: true; data: Ticket }> {
-        const cachedTicket = this.ticketReadCacheService.get(query.filter.ticketId);
-        if (cachedTicket) {
-            return cachedTicket;
-        }
-
+    async execute(query: GetTicketQuery): Promise<{ success: true; data: TicketOutputDto }> {
         const ticket = await this.ticketRepository.findOneDetailed(query.filter.ticketId);
 
         if (!ticket) {
             throw new NotFoundException('Ticket não encontrado');
         }
 
-        const response: { success: true; data: Ticket } = {
+        const response: { success: true; data: TicketOutputDto } = {
             success: true,
-            data: ticket,
+            data: mapTicketToOutputDto(ticket),
         };
-        this.ticketReadCacheService.set(query.filter.ticketId, response);
-
         return response;
     }
 }

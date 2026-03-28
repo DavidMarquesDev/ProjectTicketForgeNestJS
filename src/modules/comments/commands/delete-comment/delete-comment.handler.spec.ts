@@ -16,7 +16,14 @@ describe('DeleteCommentHandler', () => {
         const policyService = {
             assertCanDelete: jest.fn(),
         };
-        const handler = new DeleteCommentHandler(repository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new DeleteCommentHandler(
+            repository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         const result = await handler.execute(new DeleteCommentCommand(7, 12, 5, UserRole.USER));
 
@@ -27,6 +34,7 @@ describe('DeleteCommentHandler', () => {
             5,
             UserRole.USER,
         );
+        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
     });
 
     it('deve lançar not found quando comentário não estiver no ticket', async () => {
@@ -41,7 +49,14 @@ describe('DeleteCommentHandler', () => {
         const policyService = {
             assertCanDelete: jest.fn(),
         };
-        const handler = new DeleteCommentHandler(repository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new DeleteCommentHandler(
+            repository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         await expect(handler.execute(new DeleteCommentCommand(7, 12, 5, UserRole.USER))).rejects.toThrow(
             NotFoundException,
@@ -64,7 +79,14 @@ describe('DeleteCommentHandler', () => {
                 throw new ForbiddenException('Usuário não possui permissão para excluir comentário');
             }),
         };
-        const handler = new DeleteCommentHandler(repository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new DeleteCommentHandler(
+            repository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         await expect(
             handler.execute(new DeleteCommentCommand(7, 12, 8, UserRole.SUPPORT)),

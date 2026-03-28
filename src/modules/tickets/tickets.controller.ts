@@ -47,10 +47,12 @@ import { UpdateStatusCommand } from './commands/update-status/update-status.comm
 import { AssignTicketDto } from './dto/assign-ticket.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { GetTicketsQueryDto } from './dto/get-tickets-query.dto';
+import { TicketOutputDto } from './dto/ticket-output.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { GetTicketQuery } from './queries/get-ticket/get-ticket.query';
 import { GetTicketsQuery } from './queries/get-tickets/get-tickets.query';
+import { TicketReadCacheService } from './services/ticket-read-cache.service';
 
 @ApiTags('tickets')
 @ApiBearerAuth()
@@ -61,6 +63,7 @@ export class TicketsController {
         private readonly commandBus: CommandBus,
         private readonly queryBus: QueryBus,
         private readonly idempotencyService: IdempotencyService,
+        private readonly ticketReadCacheService: TicketReadCacheService,
     ) {}
 
     /**
@@ -147,7 +150,7 @@ export class TicketsController {
             scope: `tickets:assign:${id}`,
             actorId: user.id,
             key: idempotencyKey,
-            action: () => this.commandBus.execute(new AssignTicketCommand(id, dto, user.role)),
+            action: () => this.commandBus.execute(new AssignTicketCommand(id, dto, user.role, user.id)),
         });
     }
 
@@ -194,7 +197,15 @@ export class TicketsController {
     @ApiNotFoundResponse(ticketApiNotFoundResponse)
     @ApiBadRequestResponse(getTicketApiBadRequestResponse)
     @Get(':id')
-    findOne(@Param('id', ParseIntPipe) id: number) {
-        return this.queryBus.execute(new GetTicketQuery({ ticketId: id }));
+    async findOne(@Param('id', ParseIntPipe) id: number): Promise<{ success: true; data: TicketOutputDto }> {
+        const cachedTicket = this.ticketReadCacheService.get(id);
+        if (cachedTicket) {
+            return cachedTicket;
+        }
+
+        const response = await this.queryBus.execute(new GetTicketQuery({ ticketId: id }));
+        this.ticketReadCacheService.set(id, response);
+
+        return response as { success: true; data: TicketOutputDto };
     }
 }

@@ -10,6 +10,7 @@ export type OutboxDispatchJobPayload = {
     schemaVersion: number;
     aggregateType: string;
     aggregateId: string;
+    traceId: string | null;
     payload: string;
 };
 
@@ -20,6 +21,7 @@ export type OutboxDeadLetterJobPayload = {
     schemaVersion: number;
     aggregateType: string;
     aggregateId: string;
+    traceId: string | null;
     payload: string;
     attempts: number;
     errorMessage: string;

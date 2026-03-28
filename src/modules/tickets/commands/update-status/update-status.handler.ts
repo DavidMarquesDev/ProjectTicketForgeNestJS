@@ -1,5 +1,6 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { AuditTrailService } from '../../../audit/services/audit-trail.service';
 import { UpdateStatusCommand } from './update-status.command';
 import { OutboxService } from '../../../outbox/outbox.service';
 import { TicketPolicyService } from '../../policies/ticket-policy.service';
@@ -16,6 +17,7 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
         private readonly statusTransitionService: TicketStatusTransitionService,
         private readonly eventBus: EventBus,
         private readonly outboxService: OutboxService,
+        private readonly auditTrailService: AuditTrailService,
     ) {}
 
     /**
@@ -48,6 +50,15 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
                 ticketId: command.ticketId,
                 status: command.dto.status,
                 updatedBy: command.actorId,
+            },
+        });
+        await this.auditTrailService.record({
+            action: 'ticket_status_updated',
+            aggregateType: 'ticket',
+            aggregateId: command.ticketId.toString(),
+            actorId: command.actorId,
+            metadata: {
+                status: command.dto.status,
             },
         });
 

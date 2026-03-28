@@ -1,12 +1,31 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ListDeadLetterEventsQuery } from './list-dead-letter-events.query';
-import { OutboxEvent } from '../../../outbox/entities/outbox-event.entity';
+import { DeadLetterPayloadMaskMode } from '../get-dead-letter-event-by-id/get-dead-letter-event-by-id.query';
+import { OutboxEventStatus } from '../../../outbox/entities/outbox-event-status.enum';
 import { OutboxService } from '../../../outbox/outbox.service';
+import { DeadLetterPayloadMaskingService } from '../../services/dead-letter-payload-masking.service';
 
 type ListDeadLetterEventsResult = {
     success: true;
-    data: OutboxEvent[];
+    data: Array<{
+        id: string;
+        eventId: string;
+        eventName: string;
+        schemaVersion: number;
+        aggregateType: string;
+        aggregateId: string;
+        status: OutboxEventStatus.DEAD_LETTERED;
+        attempts: number;
+        availableAt: Date;
+        queuedAt: Date | null;
+        processedAt: Date | null;
+        deadLetteredAt: Date | null;
+        lastError: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        payloadMasked: unknown;
+    }>;
     meta: {
         page: number;
         limit: number;
@@ -17,7 +36,10 @@ type ListDeadLetterEventsResult = {
 
 @QueryHandler(ListDeadLetterEventsQuery)
 export class ListDeadLetterEventsHandler implements IQueryHandler<ListDeadLetterEventsQuery> {
-    constructor(private readonly outboxService: OutboxService) {}
+    constructor(
+        private readonly outboxService: OutboxService,
+        private readonly deadLetterPayloadMaskingService: DeadLetterPayloadMaskingService,
+    ) {}
 
     async execute(query: ListDeadLetterEventsQuery): Promise<ListDeadLetterEventsResult> {
         if (
@@ -51,7 +73,29 @@ export class ListDeadLetterEventsHandler implements IQueryHandler<ListDeadLetter
 
         return {
             success: true,
-            data: result.data,
+            data: result.data.map((event) => {
+                return {
+                    id: event.id,
+                    eventId: event.eventId,
+                    eventName: event.eventName,
+                    schemaVersion: event.schemaVersion,
+                    aggregateType: event.aggregateType,
+                    aggregateId: event.aggregateId,
+                    status: OutboxEventStatus.DEAD_LETTERED,
+                    attempts: event.attempts,
+                    availableAt: event.availableAt,
+                    queuedAt: event.queuedAt,
+                    processedAt: event.processedAt,
+                    deadLetteredAt: event.deadLetteredAt,
+                    lastError: event.lastError,
+                    createdAt: event.createdAt,
+                    updatedAt: event.updatedAt,
+                    payloadMasked: this.deadLetterPayloadMaskingService.maskAndTruncatePayload(
+                        event.payload,
+                        query.filters.maskMode ?? DeadLetterPayloadMaskMode.TOTAL,
+                    ),
+                };
+            }),
             meta: {
                 page: result.page,
                 limit: result.limit,
@@ -61,4 +105,3 @@ export class ListDeadLetterEventsHandler implements IQueryHandler<ListDeadLetter
         };
     }
 }
-

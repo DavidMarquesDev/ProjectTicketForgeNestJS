@@ -2,6 +2,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { OutboxEventStatus } from '../../../outbox/entities/outbox-event-status.enum';
 import { OutboxService } from '../../../outbox/outbox.service';
+import { DeadLetterPayloadMaskingService } from '../../services/dead-letter-payload-masking.service';
 import { GetDeadLetterEventByIdQuery } from './get-dead-letter-event-by-id.query';
 
 type GetDeadLetterEventByIdResult = {
@@ -28,18 +29,6 @@ type GetDeadLetterEventByIdResult = {
 
 @QueryHandler(GetDeadLetterEventByIdQuery)
 export class GetDeadLetterEventByIdHandler implements IQueryHandler<GetDeadLetterEventByIdQuery> {
-    private readonly sensitiveKeys = [
-        'password',
-        'passwordhash',
-        'token',
-        'secret',
-        'apikey',
-        'api_key',
-        'authorization',
-        'cpf',
-        'email',
-    ];
-
     async execute(query: GetDeadLetterEventByIdQuery): Promise<GetDeadLetterEventByIdResult> {
         const outboxEvent = await this.outboxService.findById(query.outboxEventId);
         if (!outboxEvent) {
@@ -68,57 +57,16 @@ export class GetDeadLetterEventByIdHandler implements IQueryHandler<GetDeadLette
                 lastError: outboxEvent.lastError,
                 createdAt: outboxEvent.createdAt,
                 updatedAt: outboxEvent.updatedAt,
-                payloadMasked: this.maskSensitiveData(this.parsePayload(outboxEvent.payload)),
+                payloadMasked: this.deadLetterPayloadMaskingService.maskAndTruncatePayload(
+                    outboxEvent.payload,
+                    query.maskMode,
+                ),
             },
         };
     }
 
-    constructor(private readonly outboxService: OutboxService) {}
-
-    private parsePayload(payload: string): unknown {
-        try {
-            return JSON.parse(payload) as unknown;
-        } catch {
-            return {
-                content: 'payload inválido',
-            };
-        }
-    }
-
-    private maskSensitiveData(value: unknown, parentKey?: string): unknown {
-        if (Array.isArray(value)) {
-            return value.map((item) => this.maskSensitiveData(item, parentKey));
-        }
-
-        if (value === null || value === undefined) {
-            return value;
-        }
-
-        if (typeof value === 'object') {
-            const output: Record<string, unknown> = {};
-            const input = value as Record<string, unknown>;
-            for (const [key, childValue] of Object.entries(input)) {
-                output[key] = this.maskSensitiveData(childValue, key);
-            }
-
-            return output;
-        }
-
-        if (this.isSensitiveKey(parentKey)) {
-            return '***';
-        }
-
-        return value;
-    }
-
-    private isSensitiveKey(key?: string): boolean {
-        if (!key) {
-            return false;
-        }
-
-        const normalizedKey = key.toLowerCase();
-
-        return this.sensitiveKeys.some((sensitiveKey) => normalizedKey.includes(sensitiveKey));
-    }
+    constructor(
+        private readonly outboxService: OutboxService,
+        private readonly deadLetterPayloadMaskingService: DeadLetterPayloadMaskingService,
+    ) {}
 }
-

@@ -17,7 +17,14 @@ describe('UpdateCommentHandler', () => {
         const policyService = {
             assertCanUpdate: jest.fn(),
         };
-        const handler = new UpdateCommentHandler(repository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new UpdateCommentHandler(
+            repository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         const result = await handler.execute(
             new UpdateCommentCommand(
@@ -41,6 +48,7 @@ describe('UpdateCommentHandler', () => {
             5,
             UserRole.USER,
         );
+        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
     });
 
     it('deve lançar not found quando comentário não existir no ticket', async () => {
@@ -56,7 +64,14 @@ describe('UpdateCommentHandler', () => {
         const policyService = {
             assertCanUpdate: jest.fn(),
         };
-        const handler = new UpdateCommentHandler(repository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new UpdateCommentHandler(
+            repository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         await expect(
             handler.execute(
@@ -88,7 +103,14 @@ describe('UpdateCommentHandler', () => {
                 throw new ForbiddenException('Usuário não possui permissão para editar comentário');
             }),
         };
-        const handler = new UpdateCommentHandler(repository as never, policyService as never);
+        const auditTrailService = {
+            record: jest.fn(),
+        };
+        const handler = new UpdateCommentHandler(
+            repository as never,
+            policyService as never,
+            auditTrailService as never,
+        );
 
         await expect(
             handler.execute(

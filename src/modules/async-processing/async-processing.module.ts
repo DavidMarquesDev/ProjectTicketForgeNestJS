@@ -13,6 +13,7 @@ import { OutboxDispatcherService } from './outbox-dispatcher.service';
 import { AsyncProcessingPolicyService } from './policies/async-processing-policy.service';
 import { GetDeadLetterEventByIdHandler } from './queries/get-dead-letter-event-by-id/get-dead-letter-event-by-id.handler';
 import { ListDeadLetterEventsHandler } from './queries/list-dead-letter-events/list-dead-letter-events.handler';
+import { DeadLetterPayloadMaskingService } from './services/dead-letter-payload-masking.service';
 import { ReprocessDeadLetterEventService } from './services/reprocess-dead-letter-event.service';
 import { OutboxModule } from '../outbox/outbox.module';
 
@@ -41,6 +42,7 @@ import { OutboxModule } from '../outbox/outbox.module';
         DomainEventsProcessor,
         OutboxDispatcherService,
         AsyncProcessingPolicyService,
+        DeadLetterPayloadMaskingService,
         ReprocessDeadLetterEventService,
         ReprocessDeadLetterEventHandler,
         ListDeadLetterEventsHandler,

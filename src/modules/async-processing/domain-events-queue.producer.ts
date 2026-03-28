@@ -24,6 +24,7 @@ export class DomainEventsQueueProducer {
                 schemaVersion: event.schemaVersion,
                 aggregateType: event.aggregateType,
                 aggregateId: event.aggregateId,
+                traceId: event.traceId,
                 payload: event.payload,
             },
             {

@@ -21,6 +21,9 @@ export class OutboxEvent {
     @Column({ name: 'aggregate_id', length: 80 })
     aggregateId: string;
 
+    @Column({ name: 'trace_id', type: 'varchar', length: 120, nullable: true })
+    traceId: string | null;
+
     @Column({ type: 'text' })
     payload: string;
 

@@ -15,6 +15,7 @@ type DeadLetterInput = {
     schemaVersion: number;
     aggregateType: string;
     aggregateId: string;
+    traceId: string | null;
     payload: string;
     attempts: number;
     errorMessage: string;

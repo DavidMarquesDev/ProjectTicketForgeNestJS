@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { ObservabilityModule } from './common/observability/observability.module';
 import { AsyncProcessingModule } from './modules/async-processing/async-processing.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { OutboxModule } from './modules/outbox/outbox.module';
@@ -112,6 +114,10 @@ const validateAsyncQueueConfiguration = (
         throw new Error('Invalid REDIS_PORT: expected integer between 1 and 65535');
     }
 
+    if (doesNodeEnvironmentRequireDatabaseUrl(nodeEnvironment) && isAsyncQueueEnabled !== true) {
+        throw new Error('ASYNC_QUEUE_ENABLED must be true in production-like environments');
+    }
+
     if (isAsyncQueueEnabled !== true) {
         return;
     }
@@ -129,6 +135,45 @@ const validateAsyncQueueConfiguration = (
         && doesNodeEnvironmentRequireDatabaseUrl(nodeEnvironment);
     if (shouldRequireWebhook && isMissingEnvironmentVariable(environment, 'NOTIFICATION_WEBHOOK_URL')) {
         throw new Error('Missing required environment variables: NOTIFICATION_WEBHOOK_URL');
+    }
+};
+
+const validateCorsConfiguration = (environment: Record<string, unknown>, nodeEnvironment: string): void => {
+    const corsAllowedOrigins = environment.CORS_ALLOWED_ORIGINS;
+
+    if (!doesNodeEnvironmentRequireDatabaseUrl(nodeEnvironment)) {
+        return;
+    }
+
+    if (typeof corsAllowedOrigins !== 'string' || corsAllowedOrigins.trim().length === 0) {
+        throw new Error('Missing required environment variables: CORS_ALLOWED_ORIGINS');
+    }
+
+    const origins = corsAllowedOrigins
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
+
+    if (origins.length === 0) {
+        throw new Error('Invalid CORS_ALLOWED_ORIGINS: at least one origin must be provided');
+    }
+
+    for (const origin of origins) {
+        if (origin === '*') {
+            throw new Error('Invalid CORS_ALLOWED_ORIGINS: wildcard is not allowed in production-like environments');
+        }
+
+        try {
+            const parsedOrigin = new URL(origin);
+            const isHttpProtocol = parsedOrigin.protocol === 'http:' || parsedOrigin.protocol === 'https:';
+            if (!isHttpProtocol) {
+                throw new Error(`Invalid protocol for origin "${origin}"`);
+            }
+        } catch (error) {
+            throw new Error(
+                `Invalid CORS_ALLOWED_ORIGINS: ${error instanceof Error ? error.message : 'invalid origin'}`,
+            );
+        }
     }
 };
 
@@ -154,6 +199,7 @@ export const validateEnvironment = (environment: Record<string, unknown>): Recor
 
     validateNotificationConfiguration(environment);
     validateAsyncQueueConfiguration(environment, currentNodeEnvironment);
+    validateCorsConfiguration(environment, currentNodeEnvironment);
 
     return environment;
 };
@@ -166,6 +212,8 @@ const isLocalNodeEnvironment = (): boolean => {
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
+        ObservabilityModule,
+        AuditModule,
         ThrottlerModule.forRoot([
             {
                 ttl: 60000,

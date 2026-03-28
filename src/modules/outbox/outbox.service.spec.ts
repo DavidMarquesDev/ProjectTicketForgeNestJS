@@ -105,4 +105,26 @@ describe('OutboxService', () => {
         expect(result.data).toHaveLength(1);
         expect(result.data[0].status).toBe(OutboxEventStatus.DEAD_LETTERED);
     });
+
+    it('deve retornar estatísticas de tempo pendente para backlog assíncrono', async () => {
+        outboxService = new OutboxService(outboxRepository);
+        await outboxService.createPendingEvent({
+            eventName: 'TicketCreatedEvent',
+            aggregateType: 'ticket',
+            aggregateId: '200',
+            payload: { ticketId: 200 },
+        });
+        await outboxService.createPendingEvent({
+            eventName: 'TicketStatusUpdatedEvent',
+            aggregateType: 'ticket',
+            aggregateId: '201',
+            payload: { ticketId: 201 },
+        });
+
+        const stats = await outboxService.getPendingTimeStats();
+
+        expect(stats.samples).toBe(2);
+        expect(stats.averagePendingSeconds).toBeGreaterThanOrEqual(0);
+        expect(stats.oldestPendingSeconds).toBeGreaterThanOrEqual(stats.averagePendingSeconds);
+    });
 });

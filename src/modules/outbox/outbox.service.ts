@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, LessThanOrEqual, Not, Repository } from 'typeorm';
+import { TraceContextStore } from '../../common/observability/trace-context.store';
 import { OutboxEvent } from './entities/outbox-event.entity';
 import { OutboxEventStatus } from './entities/outbox-event-status.enum';
 
@@ -11,6 +12,7 @@ type CreateOutboxEventInput = {
     schemaVersion?: number;
     aggregateType: string;
     aggregateId: string;
+    traceId?: string | null;
     payload: Record<string, unknown>;
 };
 
@@ -52,6 +54,12 @@ export type MarkFailedResult = {
     attempts: number;
 };
 
+export type PendingTimeStats = {
+    averagePendingSeconds: number;
+    oldestPendingSeconds: number;
+    samples: number;
+};
+
 @Injectable()
 export class OutboxService {
     private readonly maxAttempts = Number(process.env.OUTBOX_MAX_ATTEMPTS ?? 5);
@@ -69,6 +77,7 @@ export class OutboxService {
             schemaVersion: input.schemaVersion ?? 1,
             aggregateType: input.aggregateType,
             aggregateId: input.aggregateId,
+            traceId: input.traceId ?? TraceContextStore.getTraceId() ?? null,
             payload: JSON.stringify(input.payload),
             status: OutboxEventStatus.PENDING,
             attempts: 0,
@@ -118,6 +127,7 @@ export class OutboxService {
                 'outbox.schemaVersion',
                 'outbox.aggregateType',
                 'outbox.aggregateId',
+                'outbox.traceId',
                 'outbox.status',
                 'outbox.attempts',
                 'outbox.availableAt',
@@ -237,7 +247,9 @@ export class OutboxService {
             ? this.maxAttempts
             : 5;
         const shouldMoveToDeadLetter = attempts >= normalizedMaxAttempts;
-        const retryDelaySeconds = Math.min(attempts * 15, 300);
+        const exponentialDelaySeconds = Math.min(15 * 2 ** Math.max(attempts - 1, 0), 300);
+        const jitterSeconds = this.generateJitterSeconds(exponentialDelaySeconds);
+        const retryDelaySeconds = Math.min(exponentialDelaySeconds + jitterSeconds, 300);
         const availableAt = new Date(Date.now() + retryDelaySeconds * 1000);
         const status = shouldMoveToDeadLetter ? OutboxEventStatus.DEAD_LETTERED : OutboxEventStatus.FAILED;
 
@@ -270,11 +282,89 @@ export class OutboxService {
         });
     }
 
+    async countByStatus(status: OutboxEventStatus): Promise<number> {
+        return this.outboxRepository.count({
+            where: {
+                status,
+            },
+        });
+    }
+
+    async countByStatuses(statuses: OutboxEventStatus[]): Promise<number> {
+        if (statuses.length === 0) {
+            return 0;
+        }
+
+        return this.outboxRepository
+            .createQueryBuilder('outbox')
+            .where('outbox.status IN (:...statuses)', { statuses })
+            .getCount();
+    }
+
+    async getPendingTimeStats(
+        statuses: OutboxEventStatus[] = [
+            OutboxEventStatus.PENDING,
+            OutboxEventStatus.FAILED,
+            OutboxEventStatus.QUEUED,
+        ],
+    ): Promise<PendingTimeStats> {
+        if (statuses.length === 0) {
+            return {
+                averagePendingSeconds: 0,
+                oldestPendingSeconds: 0,
+                samples: 0,
+            };
+        }
+
+        const rawDates = await this.outboxRepository
+            .createQueryBuilder('outbox')
+            .select('outbox.createdAt', 'createdAt')
+            .where('outbox.status IN (:...statuses)', { statuses })
+            .getRawMany<{ createdAt: Date | string }>();
+        if (rawDates.length === 0) {
+            return {
+                averagePendingSeconds: 0,
+                oldestPendingSeconds: 0,
+                samples: 0,
+            };
+        }
+
+        const nowMs = Date.now();
+        const pendingSeconds = rawDates
+            .map((raw) => new Date(raw.createdAt).getTime())
+            .filter((value) => Number.isFinite(value))
+            .map((createdAtMs) => Math.max(0, (nowMs - createdAtMs) / 1000));
+        if (pendingSeconds.length === 0) {
+            return {
+                averagePendingSeconds: 0,
+                oldestPendingSeconds: 0,
+                samples: 0,
+            };
+        }
+
+        const total = pendingSeconds.reduce((sum, value) => sum + value, 0);
+        const oldestPendingSeconds = Math.max(...pendingSeconds);
+        return {
+            averagePendingSeconds: Number((total / pendingSeconds.length).toFixed(2)),
+            oldestPendingSeconds: Number(oldestPendingSeconds.toFixed(2)),
+            samples: pendingSeconds.length,
+        };
+    }
+
     private resolveRepository(manager?: EntityManager): Repository<OutboxEvent> {
         if (manager) {
             return manager.getRepository(OutboxEvent);
         }
 
         return this.outboxRepository;
+    }
+
+    private generateJitterSeconds(baseDelaySeconds: number): number {
+        if (baseDelaySeconds <= 0) {
+            return 0;
+        }
+
+        const maxJitterSeconds = Math.max(1, Math.floor(baseDelaySeconds * 0.2));
+        return Math.floor(Math.random() * (maxJitterSeconds + 1));
     }
 }

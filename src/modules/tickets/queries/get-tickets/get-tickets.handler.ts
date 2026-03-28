@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GetTicketsQuery } from './get-tickets.query';
+import { mapTicketToOutputDto, TicketOutputDto } from '../../dto/ticket-output.dto';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../repositories/ticket.repository.interface';
-import { Ticket } from '../../entities/ticket.entity';
 
 type GetTicketsResult = {
     success: true;
-    data: Ticket[];
+    data: TicketOutputDto[];
     meta: {
         page: number;
         limit: number;
@@ -40,7 +40,7 @@ export class GetTicketsHandler implements IQueryHandler<GetTicketsQuery> {
 
         return {
             success: true,
-            data: result.data,
+            data: result.data.map(mapTicketToOutputDto),
             meta: {
                 page: result.page,
                 limit: result.limit,

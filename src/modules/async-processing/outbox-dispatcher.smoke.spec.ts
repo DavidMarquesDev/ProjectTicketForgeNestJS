@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { OutboxEventStatus } from '../outbox/entities/outbox-event-status.enum';
 import { OutboxEvent } from '../outbox/entities/outbox-event.entity';
 import { OutboxService } from '../outbox/outbox.service';
+import { OperationalMetricsService } from '../../common/observability/operational-metrics.service';
 import { DeadLetterQueueProducer } from './dead-letter-queue.producer';
 import { DomainEventsProcessor } from './domain-events.processor';
 import { DomainEventsQueueProducer } from './domain-events-queue.producer';
@@ -20,6 +21,11 @@ describe('OutboxDispatcherService smoke', () => {
     let processor: DomainEventsProcessor;
     let notificationDispatcher: { dispatch: jest.Mock };
     let deadLetterQueueAddMock: jest.Mock;
+    let operationalMetricsService: {
+        recordQueueFailure: jest.Mock;
+        recordQueueDispatchBatch: jest.Mock;
+        recordQueueProcessingDuration: jest.Mock;
+    };
     let asyncQueueEnabledOriginal: string | undefined;
 
     beforeAll(async () => {
@@ -43,10 +49,25 @@ describe('OutboxDispatcherService smoke', () => {
         notificationDispatcher = {
             dispatch: jest.fn().mockResolvedValue(undefined),
         };
+        operationalMetricsService = {
+            recordQueueFailure: jest.fn(),
+            recordQueueDispatchBatch: jest.fn(),
+            recordQueueProcessingDuration: jest.fn(),
+        };
         queueProducer = new DomainEventsQueueProducer({ add: queueAddMock } as unknown as Queue<OutboxDispatchJobPayload>);
         deadLetterQueueProducer = new DeadLetterQueueProducer({ add: deadLetterQueueAddMock } as never);
-        dispatcher = new OutboxDispatcherService(outboxService, queueProducer, deadLetterQueueProducer);
-        processor = new DomainEventsProcessor(outboxService, deadLetterQueueProducer, notificationDispatcher as never);
+        dispatcher = new OutboxDispatcherService(
+            outboxService,
+            queueProducer,
+            deadLetterQueueProducer,
+            operationalMetricsService as unknown as OperationalMetricsService,
+        );
+        processor = new DomainEventsProcessor(
+            outboxService,
+            deadLetterQueueProducer,
+            operationalMetricsService as unknown as OperationalMetricsService,
+            notificationDispatcher as never,
+        );
     });
 
     afterAll(async () => {
@@ -93,6 +114,7 @@ describe('OutboxDispatcherService smoke', () => {
                 schemaVersion: queued.schemaVersion,
                 aggregateType: queued.aggregateType,
                 aggregateId: queued.aggregateId,
+                traceId: queued.traceId,
                 payload: queued.payload,
             },
         } as Job<OutboxDispatchJobPayload>;

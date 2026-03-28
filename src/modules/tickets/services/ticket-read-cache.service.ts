@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Ticket } from '../entities/ticket.entity';
+import { TicketOutputDto } from '../dto/ticket-output.dto';
 
 type CachedTicketDetail = {
     success: true;
-    data: Ticket;
+    data: TicketOutputDto;
 };
 
 type CacheEntry = {
@@ -53,4 +53,3 @@ export class TicketReadCacheService {
         return structuredClone(value);
     }
 }
-

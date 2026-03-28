@@ -17,10 +17,15 @@ describe('DomainEventsProcessor', () => {
         const deadLetterQueueProducer = {
             enqueue: jest.fn(),
         };
+        const operationalMetricsService = {
+            recordQueueFailure: jest.fn(),
+            recordQueueProcessingDuration: jest.fn(),
+        };
         const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
         const processor = new DomainEventsProcessor(
             outboxService as never,
             deadLetterQueueProducer as never,
+            operationalMetricsService as never,
             notificationDispatcher as never,
         );
 
@@ -49,6 +54,7 @@ describe('DomainEventsProcessor', () => {
         expect(loggerSpy.mock.calls.some((call) => String(call[0]).includes('"action":"notification_dispatched"'))).toBe(
             true,
         );
+        expect(operationalMetricsService.recordQueueProcessingDuration).toHaveBeenCalledTimes(1);
         loggerSpy.mockRestore();
     });
 
@@ -64,11 +70,16 @@ describe('DomainEventsProcessor', () => {
         const deadLetterQueueProducer = {
             enqueue: jest.fn(),
         };
+        const operationalMetricsService = {
+            recordQueueFailure: jest.fn(),
+            recordQueueProcessingDuration: jest.fn(),
+        };
         const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
         const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
         const processor = new DomainEventsProcessor(
             outboxService as never,
             deadLetterQueueProducer as never,
+            operationalMetricsService as never,
             notificationDispatcher as never,
         );
 
@@ -110,9 +121,14 @@ describe('DomainEventsProcessor', () => {
         const deadLetterQueueProducer = {
             enqueue: jest.fn(),
         };
+        const operationalMetricsService = {
+            recordQueueFailure: jest.fn(),
+            recordQueueProcessingDuration: jest.fn(),
+        };
         const processor = new DomainEventsProcessor(
             outboxService as never,
             deadLetterQueueProducer as never,
+            operationalMetricsService as never,
             notificationDispatcher as never,
         );
 
@@ -150,9 +166,14 @@ describe('DomainEventsProcessor', () => {
         const deadLetterQueueProducer = {
             enqueue: jest.fn(),
         };
+        const operationalMetricsService = {
+            recordQueueFailure: jest.fn(),
+            recordQueueProcessingDuration: jest.fn(),
+        };
         const processor = new DomainEventsProcessor(
             outboxService as never,
             deadLetterQueueProducer as never,
+            operationalMetricsService as never,
             notificationDispatcher as never,
         );
 
@@ -173,5 +194,6 @@ describe('DomainEventsProcessor', () => {
         );
 
         expect(deadLetterQueueProducer.enqueue).toHaveBeenCalledTimes(1);
+        expect(operationalMetricsService.recordQueueFailure).toHaveBeenCalledTimes(1);
     });
 });

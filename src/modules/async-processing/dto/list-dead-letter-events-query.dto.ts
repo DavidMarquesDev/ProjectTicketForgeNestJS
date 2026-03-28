@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { DeadLetterSortBy, DeadLetterSortOrder } from '../../outbox/outbox.service';
+import { DeadLetterPayloadMaskMode } from '../queries/get-dead-letter-event-by-id/get-dead-letter-event-by-id.query';
 
 export class ListDeadLetterEventsQueryDto {
     @ApiPropertyOptional({ default: 1 })
@@ -62,5 +63,13 @@ export class ListDeadLetterEventsQueryDto {
     @IsOptional()
     @IsEnum(DeadLetterSortOrder)
     order?: DeadLetterSortOrder = DeadLetterSortOrder.DESC;
-}
 
+    @ApiPropertyOptional({
+        enum: DeadLetterPayloadMaskMode,
+        default: DeadLetterPayloadMaskMode.TOTAL,
+        description: 'Define o nível de mascaramento do payload sensível na listagem',
+    })
+    @IsOptional()
+    @IsEnum(DeadLetterPayloadMaskMode)
+    maskMode?: DeadLetterPayloadMaskMode = DeadLetterPayloadMaskMode.TOTAL;
+}

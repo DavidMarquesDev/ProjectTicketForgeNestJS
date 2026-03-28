@@ -1,4 +1,5 @@
 import { DeadLetterSortBy, DeadLetterSortOrder } from '../../../outbox/outbox.service';
+import { DeadLetterPayloadMaskMode } from '../get-dead-letter-event-by-id/get-dead-letter-event-by-id.query';
 
 type ListDeadLetterEventsFilters = {
     page: number;
@@ -11,9 +12,9 @@ type ListDeadLetterEventsFilters = {
     attemptsMax?: number;
     sortBy?: DeadLetterSortBy;
     order?: DeadLetterSortOrder;
+    maskMode?: DeadLetterPayloadMaskMode;
 };
 
 export class ListDeadLetterEventsQuery {
     constructor(public readonly filters: ListDeadLetterEventsFilters) {}
 }
-
