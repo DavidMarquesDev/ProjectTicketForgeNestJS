@@ -17,7 +17,7 @@ export class AuditLog {
     @Column({ name: 'actor_id', type: 'int', nullable: true })
     actorId: number | null;
 
-    @Column({ name: 'trace_id', length: 120, nullable: true })
+    @Column({ name: 'trace_id', type: 'varchar', length: 120, nullable: true })
     traceId: string | null;
 
     @Column({ type: 'text' })
