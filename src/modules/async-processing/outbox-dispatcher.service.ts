@@ -47,8 +47,13 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
         try {
             const pendingEvents = await this.outboxService.findDispatchable(this.batchSize);
             for (const pendingEvent of pendingEvents) {
-                await this.queueProducer.enqueueOutboxEvent(pendingEvent);
-                await this.outboxService.markQueued(pendingEvent.id);
+                try {
+                    await this.outboxService.markQueued(pendingEvent.id);
+                    await this.queueProducer.enqueueOutboxEvent(pendingEvent);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : 'Erro desconhecido ao enfileirar evento';
+                    await this.outboxService.markFailed(pendingEvent.id, message);
+                }
             }
 
             if (pendingEvents.length > 0) {

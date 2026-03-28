@@ -26,3 +26,4 @@ pnpm-debug.log*
 *.sqlite3
 tmp/
 temp/
+.trae/
