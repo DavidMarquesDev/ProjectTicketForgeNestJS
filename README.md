@@ -21,6 +21,210 @@ Core business capabilities currently implemented:
 - comment creation and retrieval per ticket;
 - authorization policies for sensitive ticket actions;
 - standardized error handling.
+# TicketForge NestJS
+
+TicketForge NestJS is a ticket management API designed for scalable and maintainable enterprise workflows.
+The project uses a domain-oriented modular structure and CQRS to separate write and read responsibilities.
+
+## System Scope
+
+Core capabilities currently implemented:
+
+- JWT authentication (`register`, `login`, `me`, `logout`)
+- Ticket creation, assignment, status transition, listing, and detail
+- Comment creation and listing by ticket
+- Policy-based authorization for sensitive ticket operations
+- Standardized error payload through a global exception filter
+
+## Architecture
+
+The project follows a layered architecture inspired by DDD + CQRS:
+
+- **Presentation Layer**: Controllers, Guards, DTO validation, HTTP contracts
+- **Application Layer**: Commands, Queries, Handlers, orchestration
+- **Domain Layer**: Entities, policies, transition rules
+- **Infrastructure Layer**: TypeORM repositories and persistence concerns
+
+Patterns in use:
+
+- **CQRS**
+- **Repository Pattern**
+- **Policy-Oriented Business Rules**
+- **Event-Driven Extension Points**
+- **Dependency Inversion via tokens/interfaces**
+
+## Tech Stack
+
+- Node.js
+- TypeScript
+- NestJS
+- TypeORM
+- PostgreSQL
+- JWT + Passport
+- class-validator / class-transformer
+- Swagger OpenAPI
+- Jest + ESLint
+
+## Project Structure
+
+```txt
+src/
+├── common/
+│   ├── decorators/
+│   ├── filters/
+│   ├── guards/
+│   └── response/
+├── modules/
+│   ├── auth/
+│   ├── tickets/
+│   └── comments/
+├── database/
+│   └── migrations/
+├── app.module.ts
+└── main.ts
+```
+
+## Prerequisites
+
+- Node.js 20+
+- npm 10+
+- Docker Desktop
+- WSL2 enabled (Windows environments)
+
+## WSL2 Setup (Windows)
+
+Run PowerShell as Administrator and execute:
+
+```powershell
+dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+```
+
+Restart Windows, then run:
+
+```powershell
+wsl --install -d Ubuntu
+wsl --set-default-version 2
+wsl --status
+```
+
+In Docker Desktop:
+
+- Open **Settings > General** and enable **Use the WSL 2 based engine**
+- Open **Settings > Resources > WSL Integration** and enable your distro (for example, Ubuntu)
+
+## PostgreSQL with Docker
+
+Start PostgreSQL:
+
+```powershell
+docker volume create ticketforge_pgdata
+docker run --name ticketforge-postgres -e POSTGRES_DB=ticketforge -e POSTGRES_USER=ticketforge -e POSTGRES_PASSWORD=ticketforge -p 5432:5432 -v ticketforge_pgdata:/var/lib/postgresql/data -d postgres:16
+```
+
+Check container status:
+
+```bash
+docker ps
+```
+
+Stop / start:
+
+```bash
+docker stop ticketforge-postgres
+docker start ticketforge-postgres
+```
+
+## Environment Configuration
+
+Create a `.env` file in the project root:
+
+```env
+DATABASE_URL=postgresql://ticketforge:ticketforge@localhost:5432/ticketforge
+JWT_SECRET=your-long-secure-secret
+JWT_EXPIRES_IN=7d
+PORT=3000
+NODE_ENV=development
+```
+
+## Installation
+
+```bash
+npm install
+```
+
+## Database Setup
+
+Run migrations:
+
+```bash
+npm run migration:run
+```
+
+Optional commands:
+
+```bash
+npm run migration:show
+npm run migration:revert
+```
+
+## Run the Application
+
+Development mode:
+
+```bash
+npm run start:dev
+```
+
+Standard mode:
+
+```bash
+npm run start
+```
+
+## Swagger (API Docs)
+
+Open:
+
+- `http://localhost:3000/docs/api` (Swagger UI)
+- `http://localhost:3000/docs/redoc` (ReDoc)
+
+## How to Authenticate in Swagger
+
+1. Call `POST /api/v1/auth/login` with:
+   - `cpf`
+   - `password`
+2. Copy the returned JWT token
+3. Click **Authorize** in Swagger
+4. Paste:
+   - `Bearer <your_token>`
+5. Execute protected endpoints (`/auth/me`, `/tickets`, `/comments`)
+
+## Validation and Quality Commands
+
+```bash
+npm run build
+npm run lint
+npm run test
+```
+
+## Useful Endpoints
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/tickets`
+- `POST /api/v1/tickets`
+- `GET /api/v1/tickets/:ticketId/comments`
+
+## Troubleshooting
+
+- **Connection refused on localhost:5432**
+  - Ensure Docker is running and `ticketforge-postgres` is up (`docker ps`)
+- **401 Unauthorized on protected routes**
+  - Ensure Swagger **Authorize** is set with `Bearer <token>`
+- **Migration issues**
+  - Verify `.env` and `DATABASE_URL` values
 
 ## Architecture
 
