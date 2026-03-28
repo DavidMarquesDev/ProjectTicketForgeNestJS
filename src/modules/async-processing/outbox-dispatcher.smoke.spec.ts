@@ -16,6 +16,7 @@ describe('OutboxDispatcherService smoke', () => {
     let queueProducer: DomainEventsQueueProducer;
     let dispatcher: OutboxDispatcherService;
     let processor: DomainEventsProcessor;
+    let notificationDispatcher: { dispatch: jest.Mock };
     let asyncQueueEnabledOriginal: string | undefined;
 
     beforeAll(async () => {
@@ -35,9 +36,12 @@ describe('OutboxDispatcherService smoke', () => {
         await outboxRepository.clear();
         outboxService = new OutboxService(outboxRepository);
         queueAddMock = jest.fn().mockResolvedValue(undefined);
+        notificationDispatcher = {
+            dispatch: jest.fn().mockResolvedValue(undefined),
+        };
         queueProducer = new DomainEventsQueueProducer({ add: queueAddMock } as unknown as Queue<OutboxDispatchJobPayload>);
         dispatcher = new OutboxDispatcherService(outboxService, queueProducer);
-        processor = new DomainEventsProcessor(outboxService);
+        processor = new DomainEventsProcessor(outboxService, notificationDispatcher as never);
     });
 
     afterAll(async () => {

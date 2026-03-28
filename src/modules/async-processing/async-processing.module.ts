@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { DOMAIN_EVENTS_QUEUE } from './async-processing.constants';
 import { DomainEventsProcessor } from './domain-events.processor';
 import { DomainEventsQueueProducer } from './domain-events-queue.producer';
+import { NOTIFICATION_DISPATCHER } from './notifications/notification-dispatcher.interface';
+import { WebhookNotificationDispatcher } from './notifications/webhook-notification.dispatcher';
 import { OutboxDispatcherService } from './outbox-dispatcher.service';
 import { OutboxModule } from '../outbox/outbox.module';
 
@@ -20,7 +22,16 @@ import { OutboxModule } from '../outbox/outbox.module';
             name: DOMAIN_EVENTS_QUEUE,
         }),
     ],
-    providers: [DomainEventsQueueProducer, DomainEventsProcessor, OutboxDispatcherService],
+    providers: [
+        DomainEventsQueueProducer,
+        DomainEventsProcessor,
+        OutboxDispatcherService,
+        WebhookNotificationDispatcher,
+        {
+            provide: NOTIFICATION_DISPATCHER,
+            useExisting: WebhookNotificationDispatcher,
+        },
+    ],
     exports: [DomainEventsQueueProducer],
 })
 export class AsyncProcessingModule {}

@@ -1,16 +1,21 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { toStructuredLog } from '../../common/logging/structured-log.helper';
 import { OutboxService } from '../outbox/outbox.service';
 import { DOMAIN_EVENTS_QUEUE, OutboxDispatchJobPayload, PROCESS_OUTBOX_EVENT_JOB } from './async-processing.constants';
+import { INotificationDispatcher, NOTIFICATION_DISPATCHER } from './notifications/notification-dispatcher.interface';
 
 @Injectable()
 @Processor(DOMAIN_EVENTS_QUEUE)
 export class DomainEventsProcessor extends WorkerHost {
     private readonly logger = new Logger(DomainEventsProcessor.name);
 
-    constructor(private readonly outboxService: OutboxService) {
+    constructor(
+        private readonly outboxService: OutboxService,
+        @Inject(NOTIFICATION_DISPATCHER)
+        private readonly notificationDispatcher: INotificationDispatcher,
+    ) {
         super();
     }
 
@@ -34,7 +39,52 @@ export class DomainEventsProcessor extends WorkerHost {
             }),
         );
 
+        if (this.isNotificationEvent(job.data.eventName)) {
+            await this.notificationDispatcher.dispatch({
+                eventName: job.data.eventName,
+                aggregateId: job.data.aggregateId,
+                payload: this.parsePayload(job.data.payload),
+            });
+            this.logger.log(
+                toStructuredLog({
+                    level: 'info',
+                    action: 'notification_dispatched',
+                    context: {
+                        outbox_event_id: job.data.outboxEventId,
+                        event_name: job.data.eventName,
+                        aggregate_id: job.data.aggregateId,
+                    },
+                }),
+            );
+        }
+
         await this.outboxService.markProcessed(job.data.outboxEventId);
+    }
+
+    private isNotificationEvent(eventName: string): boolean {
+        return eventName.endsWith('NotificationRequestedEvent');
+    }
+
+    private parsePayload(payload: string): Record<string, unknown> {
+        try {
+            const parsedPayload = JSON.parse(payload) as Record<string, unknown>;
+            if (typeof parsedPayload === 'object' && parsedPayload !== null) {
+                return parsedPayload;
+            }
+        } catch (error) {
+            this.logger.warn(
+                toStructuredLog({
+                    level: 'warn',
+                    action: 'notification_payload_parse_failed',
+                    context: {
+                        payload,
+                        error_message: error instanceof Error ? error.message : 'Erro desconhecido',
+                    },
+                }),
+            );
+        }
+
+        return {};
     }
 
     @OnWorkerEvent('failed')
