@@ -20,6 +20,13 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
         private readonly jwtService: JwtService,
     ) {}
 
+    /**
+     * Validates user credentials and issues a JWT token.
+     *
+     * @param command Login command with CPF and password.
+     * @returns Access token payload for authenticated requests.
+     * @throws UnauthorizedException When CPF or password is invalid.
+     */
     async execute(command: LoginCommand): Promise<LoginResult> {
         const user = await this.userRepository.findOne({
             where: { cpf: command.cpf },

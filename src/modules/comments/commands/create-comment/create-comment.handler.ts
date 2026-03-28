@@ -15,6 +15,13 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
         private readonly eventBus: EventBus,
     ) {}
 
+    /**
+     * Creates a comment for an existing ticket and publishes an event.
+     *
+     * @param command Comment creation command payload.
+     * @returns Created comment identifier.
+     * @throws NotFoundException When ticket does not exist.
+     */
     async execute(command: CreateCommentCommand): Promise<{ id: number; success: true }> {
         const ticket = await this.ticketRepository.findOneDetailed(command.ticketId);
         if (!ticket) {

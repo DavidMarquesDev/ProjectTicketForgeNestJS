@@ -11,6 +11,13 @@ export class GetTicketHandler implements IQueryHandler<GetTicketQuery> {
         private readonly ticketRepository: ITicketRepository,
     ) {}
 
+    /**
+     * Returns detailed ticket data by id.
+     *
+     * @param query Query with ticket identifier.
+     * @returns Detailed ticket payload.
+     * @throws NotFoundException When ticket does not exist.
+     */
     async execute(query: GetTicketQuery): Promise<{ success: true; data: Ticket }> {
         const ticket = await this.ticketRepository.findOneDetailed(query.ticketId);
 

@@ -22,6 +22,12 @@ export class GetTicketsHandler implements IQueryHandler<GetTicketsQuery> {
         private readonly ticketRepository: ITicketRepository,
     ) {}
 
+    /**
+     * Returns paginated tickets filtered by optional criteria.
+     *
+     * @param query Query with pagination and filters.
+     * @returns Paginated ticket payload.
+     */
     async execute(query: GetTicketsQuery): Promise<GetTicketsResult> {
         const result = await this.ticketRepository.paginate({
             page: query.page,

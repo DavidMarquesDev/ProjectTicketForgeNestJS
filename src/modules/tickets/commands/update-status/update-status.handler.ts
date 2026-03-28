@@ -16,6 +16,12 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
         private readonly eventBus: EventBus,
     ) {}
 
+    /**
+     * Updates ticket status after permission and transition validation.
+     *
+     * @param command Status update command payload.
+     * @returns Updated ticket identifier.
+     */
     async execute(command: UpdateStatusCommand): Promise<{ id: number; success: true }> {
         const ticket = await this.ticketRepository.findByIdOrFail(command.ticketId);
 

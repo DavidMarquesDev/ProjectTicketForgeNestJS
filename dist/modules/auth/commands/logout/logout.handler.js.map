@@ -1,1 +1,0 @@
-{"version":3,"file":"logout.handler.js","sourceRoot":"","sources":["../../../../../src/modules/auth/commands/logout/logout.handler.ts"],"names":[],"mappings":";;;;;;;;;AAAA,uCAA+D;AAC/D,qDAAiD;AAG1C,IAAM,aAAa,GAAnB,MAAM,aAAa;IACtB,KAAK,CAAC,OAAO;QACT,OAAO,EAAE,OAAO,EAAE,IAAI,EAAE,CAAC;IAC7B,CAAC;CACJ,CAAA;AAJY,sCAAa;wBAAb,aAAa;IADzB,IAAA,qBAAc,EAAC,8BAAa,CAAC;GACjB,aAAa,CAIzB"}

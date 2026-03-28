@@ -12,6 +12,12 @@ export class AssignTicketHandler implements ICommandHandler<AssignTicketCommand>
         private readonly policyService: TicketPolicyService,
     ) {}
 
+    /**
+     * Assigns a ticket to an agent after authorization checks.
+     *
+     * @param command Assignment command payload.
+     * @returns Assigned ticket identifier.
+     */
     async execute(command: AssignTicketCommand): Promise<{ id: number; success: true }> {
         this.policyService.assertCanAssign(command.actorRole);
 

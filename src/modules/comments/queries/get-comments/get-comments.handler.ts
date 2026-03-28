@@ -11,6 +11,12 @@ export class GetCommentsHandler implements IQueryHandler<GetCommentsQuery> {
         private readonly commentRepository: ICommentRepository,
     ) {}
 
+    /**
+     * Lists comments by ticket id.
+     *
+     * @param query Query containing ticket identifier.
+     * @returns Ticket comments payload.
+     */
     async execute(query: GetCommentsQuery): Promise<{ success: true; data: Comment[] }> {
         const comments = await this.commentRepository.findByTicket(query.ticketId);
         return { success: true, data: comments };

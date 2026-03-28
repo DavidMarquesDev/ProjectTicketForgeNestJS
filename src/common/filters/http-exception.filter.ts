@@ -11,6 +11,24 @@ import { ApiErrorResponse } from '../response/api-response';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+    private readonly statusCodeMap: Record<number, string> = {
+        [HttpStatus.BAD_REQUEST]: 'BAD_REQUEST',
+        [HttpStatus.UNAUTHORIZED]: 'UNAUTHORIZED',
+        [HttpStatus.FORBIDDEN]: 'FORBIDDEN',
+        [HttpStatus.NOT_FOUND]: 'NOT_FOUND',
+        [HttpStatus.CONFLICT]: 'CONFLICT',
+        [HttpStatus.UNPROCESSABLE_ENTITY]: 'UNPROCESSABLE_ENTITY',
+        [HttpStatus.TOO_MANY_REQUESTS]: 'TOO_MANY_REQUESTS',
+        [HttpStatus.INTERNAL_SERVER_ERROR]: 'INTERNAL_SERVER_ERROR',
+    };
+
+    /**
+     * Normalizes exceptions into API error contract.
+     *
+     * @param exception Runtime exception from request lifecycle.
+     * @param host NestJS execution host.
+     * @returns Void response with normalized error payload.
+     */
     catch(exception: unknown, host: ArgumentsHost): void {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse<Response>();
@@ -18,7 +36,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
         let status = HttpStatus.INTERNAL_SERVER_ERROR;
         let message = 'Erro interno do servidor';
-        let code = 'INTERNAL_SERVER_ERROR';
+        let code = this.statusCodeMap[HttpStatus.INTERNAL_SERVER_ERROR];
         let errors: Record<string, unknown> | undefined;
 
         if (exception instanceof HttpException) {
@@ -38,11 +56,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 } else if (normalized.message) {
                     message = normalized.message;
                 }
-                code = normalized.error?.toUpperCase().replace(/\s+/g, '_') ?? code;
+                code = normalized.error?.toUpperCase().replace(/\s+/g, '_') ?? this.statusCodeMap[status] ?? code;
                 if (normalized.errors) {
                     errors = normalized.errors as Record<string, unknown>;
                 }
             }
+        }
+
+        if (code === this.statusCodeMap[HttpStatus.INTERNAL_SERVER_ERROR]) {
+            code = this.statusCodeMap[status] ?? code;
         }
 
         const errorPayload: ApiErrorResponse = {

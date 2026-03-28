@@ -10,6 +10,13 @@ export class TicketStatusTransitionService {
         [TicketStatus.CLOSED]: [],
     };
 
+    /**
+     * Validates status transition according to domain rules.
+     *
+     * @param currentStatus Current ticket status.
+     * @param nextStatus Desired next status.
+     * @throws ConflictException When transition is invalid.
+     */
     assertValidTransition(currentStatus: TicketStatus, nextStatus: TicketStatus): void {
         const allowed = this.transitions[currentStatus] ?? [];
         if (!allowed.includes(nextStatus)) {

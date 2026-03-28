@@ -12,6 +12,12 @@ export class CreateTicketHandler implements ICommandHandler<CreateTicketCommand>
         private readonly eventBus: EventBus,
     ) {}
 
+    /**
+     * Creates a ticket and publishes a domain event.
+     *
+     * @param command Command with ticket creation payload.
+     * @returns Created ticket identifier.
+     */
     async execute(command: CreateTicketCommand): Promise<{ id: number; success: true }> {
         const ticket = await this.ticketRepository.createAndSave({
             title: command.title,

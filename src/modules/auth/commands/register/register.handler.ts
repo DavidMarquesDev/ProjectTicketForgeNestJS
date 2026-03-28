@@ -24,6 +24,13 @@ export class RegisterHandler implements ICommandHandler<RegisterCommand> {
         private readonly userRepository: Repository<User>,
     ) {}
 
+    /**
+     * Creates a new user account when CPF and e-mail are unique.
+     *
+     * @param command Registration command payload.
+     * @returns Created user data.
+     * @throws ConflictException When CPF or e-mail already exists.
+     */
     async execute(command: RegisterCommand): Promise<RegisterResult> {
         const userWithEmail = await this.userRepository.exists({
             where: { email: command.email },

@@ -12,6 +12,13 @@ export class GetMeHandler implements IQueryHandler<GetMeQuery> {
         private readonly userRepository: Repository<User>,
     ) {}
 
+    /**
+     * Fetches profile data for an authenticated user.
+     *
+     * @param query Query containing authenticated user id.
+     * @returns Authenticated user profile data.
+     * @throws NotFoundException When user does not exist.
+     */
     async execute(query: GetMeQuery): Promise<User> {
         const user = await this.userRepository.findOne({
             where: { id: query.userId },
