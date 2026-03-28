@@ -8,6 +8,7 @@ import { CreateCommentHandler } from './commands/create-comment/create-comment.h
 import { DeleteCommentHandler } from './commands/delete-comment/delete-comment.handler';
 import { UpdateCommentHandler } from './commands/update-comment/update-comment.handler';
 import { CommentsController } from './comments.controller';
+import { InvalidateTicketCacheOnCommentCreatedHandler } from './events/invalidate-ticket-cache-on-comment-created.handler';
 import { NotifyCommentCreatedHandler } from './events/notify-comment-created.handler';
 import { Comment } from './entities/comment.entity';
 import { CommentPolicyService } from './policies/comment-policy.service';
@@ -17,7 +18,7 @@ import { CommentTypeOrmRepository } from './repositories/comment.typeorm.reposit
 
 const commandHandlers = [CreateCommentHandler, UpdateCommentHandler, DeleteCommentHandler];
 const queryHandlers = [GetCommentsHandler];
-const eventHandlers = [NotifyCommentCreatedHandler];
+const eventHandlers = [NotifyCommentCreatedHandler, InvalidateTicketCacheOnCommentCreatedHandler];
 
 @Module({
     imports: [CqrsModule, TypeOrmModule.forFeature([Comment]), TicketsModule, OutboxModule, IdempotencyModule],

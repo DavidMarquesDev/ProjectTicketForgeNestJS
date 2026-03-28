@@ -43,6 +43,9 @@ export class OutboxEvent {
     @Column({ name: 'processed_at', type: Date, nullable: true })
     processedAt: Date | null;
 
+    @Column({ name: 'dead_lettered_at', type: Date, nullable: true })
+    deadLetteredAt: Date | null;
+
     @Column({ name: 'last_error', type: 'text', nullable: true })
     lastError: string | null;
 

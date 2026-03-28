@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { OutboxEventStatus } from '../outbox/entities/outbox-event-status.enum';
 import { OutboxEvent } from '../outbox/entities/outbox-event.entity';
 import { OutboxService } from '../outbox/outbox.service';
+import { DeadLetterQueueProducer } from './dead-letter-queue.producer';
 import { DomainEventsProcessor } from './domain-events.processor';
 import { DomainEventsQueueProducer } from './domain-events-queue.producer';
 import { OutboxDispatchJobPayload, PROCESS_OUTBOX_EVENT_JOB } from './async-processing.constants';
@@ -14,9 +15,11 @@ describe('OutboxDispatcherService smoke', () => {
     let outboxService: OutboxService;
     let queueAddMock: jest.Mock;
     let queueProducer: DomainEventsQueueProducer;
+    let deadLetterQueueProducer: DeadLetterQueueProducer;
     let dispatcher: OutboxDispatcherService;
     let processor: DomainEventsProcessor;
     let notificationDispatcher: { dispatch: jest.Mock };
+    let deadLetterQueueAddMock: jest.Mock;
     let asyncQueueEnabledOriginal: string | undefined;
 
     beforeAll(async () => {
@@ -36,12 +39,14 @@ describe('OutboxDispatcherService smoke', () => {
         await outboxRepository.clear();
         outboxService = new OutboxService(outboxRepository);
         queueAddMock = jest.fn().mockResolvedValue(undefined);
+        deadLetterQueueAddMock = jest.fn().mockResolvedValue(undefined);
         notificationDispatcher = {
             dispatch: jest.fn().mockResolvedValue(undefined),
         };
         queueProducer = new DomainEventsQueueProducer({ add: queueAddMock } as unknown as Queue<OutboxDispatchJobPayload>);
-        dispatcher = new OutboxDispatcherService(outboxService, queueProducer);
-        processor = new DomainEventsProcessor(outboxService, notificationDispatcher as never);
+        deadLetterQueueProducer = new DeadLetterQueueProducer({ add: deadLetterQueueAddMock } as never);
+        dispatcher = new OutboxDispatcherService(outboxService, queueProducer, deadLetterQueueProducer);
+        processor = new DomainEventsProcessor(outboxService, deadLetterQueueProducer, notificationDispatcher as never);
     });
 
     afterAll(async () => {
@@ -122,5 +127,6 @@ describe('OutboxDispatcherService smoke', () => {
         expect(failed.attempts).toBe(1);
         expect(failed.lastError).toBe('Falha de conexão com Redis');
         expect(failed.availableAt.getTime()).toBeGreaterThan(beforeDispatch.getTime());
+        expect(deadLetterQueueAddMock).not.toHaveBeenCalled();
     });
 });

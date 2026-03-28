@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+import { OutboxEventStatus } from '../outbox/entities/outbox-event-status.enum';
 import { DomainEventsProcessor } from './domain-events.processor';
 import { PROCESS_OUTBOX_EVENT_JOB } from './async-processing.constants';
 
@@ -13,8 +14,15 @@ describe('DomainEventsProcessor', () => {
         const notificationDispatcher = {
             dispatch: jest.fn(),
         };
+        const deadLetterQueueProducer = {
+            enqueue: jest.fn(),
+        };
         const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
-        const processor = new DomainEventsProcessor(outboxService as never, notificationDispatcher as never);
+        const processor = new DomainEventsProcessor(
+            outboxService as never,
+            deadLetterQueueProducer as never,
+            notificationDispatcher as never,
+        );
 
         const job = {
             id: 'job-1',
@@ -53,9 +61,16 @@ describe('DomainEventsProcessor', () => {
         const notificationDispatcher = {
             dispatch: jest.fn(),
         };
+        const deadLetterQueueProducer = {
+            enqueue: jest.fn(),
+        };
         const loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
         const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
-        const processor = new DomainEventsProcessor(outboxService as never, notificationDispatcher as never);
+        const processor = new DomainEventsProcessor(
+            outboxService as never,
+            deadLetterQueueProducer as never,
+            notificationDispatcher as never,
+        );
 
         const job = {
             id: 'job-2',
@@ -92,7 +107,14 @@ describe('DomainEventsProcessor', () => {
         const notificationDispatcher = {
             dispatch: jest.fn(),
         };
-        const processor = new DomainEventsProcessor(outboxService as never, notificationDispatcher as never);
+        const deadLetterQueueProducer = {
+            enqueue: jest.fn(),
+        };
+        const processor = new DomainEventsProcessor(
+            outboxService as never,
+            deadLetterQueueProducer as never,
+            notificationDispatcher as never,
+        );
 
         const job = {
             id: 'job-3',
@@ -112,5 +134,44 @@ describe('DomainEventsProcessor', () => {
 
         expect(notificationDispatcher.dispatch).not.toHaveBeenCalled();
         expect(outboxService.markProcessed).toHaveBeenCalledWith('evt-3');
+    });
+
+    it('deve enviar para DLQ quando falha atingir dead letter', async () => {
+        const outboxService = {
+            markFailed: jest.fn().mockResolvedValue({
+                marked: true,
+                status: OutboxEventStatus.DEAD_LETTERED,
+                attempts: 5,
+            }),
+        };
+        const notificationDispatcher = {
+            dispatch: jest.fn(),
+        };
+        const deadLetterQueueProducer = {
+            enqueue: jest.fn(),
+        };
+        const processor = new DomainEventsProcessor(
+            outboxService as never,
+            deadLetterQueueProducer as never,
+            notificationDispatcher as never,
+        );
+
+        await processor.onFailed(
+            {
+                id: 'job-4',
+                data: {
+                    outboxEventId: 'evt-4',
+                    eventId: 'domain-evt-4',
+                    eventName: 'TicketNotificationRequestedEvent',
+                    schemaVersion: 1,
+                    aggregateType: 'notification',
+                    aggregateId: '40',
+                    payload: JSON.stringify({ ticketId: 40 }),
+                },
+            } as unknown as Job,
+            new Error('Falha final'),
+        );
+
+        expect(deadLetterQueueProducer.enqueue).toHaveBeenCalledTimes(1);
     });
 });

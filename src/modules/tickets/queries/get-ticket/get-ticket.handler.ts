@@ -3,12 +3,14 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GetTicketQuery } from './get-ticket.query';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../repositories/ticket.repository.interface';
 import { Ticket } from '../../entities/ticket.entity';
+import { TicketReadCacheService } from '../../services/ticket-read-cache.service';
 
 @QueryHandler(GetTicketQuery)
 export class GetTicketHandler implements IQueryHandler<GetTicketQuery> {
     constructor(
         @Inject(TICKET_REPOSITORY)
         private readonly ticketRepository: ITicketRepository,
+        private readonly ticketReadCacheService: TicketReadCacheService,
     ) {}
 
     /**
@@ -19,15 +21,23 @@ export class GetTicketHandler implements IQueryHandler<GetTicketQuery> {
      * @throws NotFoundException When ticket does not exist.
      */
     async execute(query: GetTicketQuery): Promise<{ success: true; data: Ticket }> {
+        const cachedTicket = this.ticketReadCacheService.get(query.filter.ticketId);
+        if (cachedTicket) {
+            return cachedTicket;
+        }
+
         const ticket = await this.ticketRepository.findOneDetailed(query.filter.ticketId);
 
         if (!ticket) {
             throw new NotFoundException('Ticket não encontrado');
         }
 
-        return {
+        const response: { success: true; data: Ticket } = {
             success: true,
             data: ticket,
         };
+        this.ticketReadCacheService.set(query.filter.ticketId, response);
+
+        return response;
     }
 }

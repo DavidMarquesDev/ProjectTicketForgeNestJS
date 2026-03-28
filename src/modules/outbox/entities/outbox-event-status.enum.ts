@@ -3,4 +3,5 @@ export enum OutboxEventStatus {
     QUEUED = 'queued',
     PROCESSED = 'processed',
     FAILED = 'failed',
+    DEAD_LETTERED = 'dead_lettered',
 }

@@ -1,7 +1,9 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { toStructuredLog } from '../../common/logging/structured-log.helper';
+import { DeadLetterQueueProducer } from './dead-letter-queue.producer';
 import { DomainEventsQueueProducer } from './domain-events-queue.producer';
 import { OutboxService } from '../outbox/outbox.service';
+import { OutboxEventStatus } from '../outbox/entities/outbox-event-status.enum';
 
 @Injectable()
 export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
@@ -15,6 +17,7 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
     constructor(
         private readonly outboxService: OutboxService,
         private readonly queueProducer: DomainEventsQueueProducer,
+        private readonly deadLetterQueueProducer: DeadLetterQueueProducer,
     ) {}
 
     onModuleInit(): void {
@@ -52,7 +55,20 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
                     await this.queueProducer.enqueueOutboxEvent(pendingEvent);
                 } catch (error) {
                     const message = error instanceof Error ? error.message : 'Erro desconhecido ao enfileirar evento';
-                    await this.outboxService.markFailed(pendingEvent.id, message);
+                    const failedResult = await this.outboxService.markFailed(pendingEvent.id, message);
+                    if (failedResult.status === OutboxEventStatus.DEAD_LETTERED) {
+                        await this.deadLetterQueueProducer.enqueue({
+                            outboxEventId: pendingEvent.id,
+                            eventId: pendingEvent.eventId,
+                            eventName: pendingEvent.eventName,
+                            schemaVersion: pendingEvent.schemaVersion,
+                            aggregateType: pendingEvent.aggregateType,
+                            aggregateId: pendingEvent.aggregateId,
+                            payload: pendingEvent.payload,
+                            attempts: failedResult.attempts,
+                            errorMessage: message,
+                        });
+                    }
                 }
             }
 

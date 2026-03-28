@@ -2,7 +2,9 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { toStructuredLog } from '../../common/logging/structured-log.helper';
+import { OutboxEventStatus } from '../outbox/entities/outbox-event-status.enum';
 import { OutboxService } from '../outbox/outbox.service';
+import { DeadLetterQueueProducer } from './dead-letter-queue.producer';
 import { DOMAIN_EVENTS_QUEUE, OutboxDispatchJobPayload, PROCESS_OUTBOX_EVENT_JOB } from './async-processing.constants';
 import { INotificationDispatcher, NOTIFICATION_DISPATCHER } from './notifications/notification-dispatcher.interface';
 
@@ -13,6 +15,7 @@ export class DomainEventsProcessor extends WorkerHost {
 
     constructor(
         private readonly outboxService: OutboxService,
+        private readonly deadLetterQueueProducer: DeadLetterQueueProducer,
         @Inject(NOTIFICATION_DISPATCHER)
         private readonly notificationDispatcher: INotificationDispatcher,
     ) {
@@ -113,7 +116,20 @@ export class DomainEventsProcessor extends WorkerHost {
             return;
         }
 
-        await this.outboxService.markFailed(job.data.outboxEventId, error.message);
+        const failedResult = await this.outboxService.markFailed(job.data.outboxEventId, error.message);
+        if (failedResult.status === OutboxEventStatus.DEAD_LETTERED) {
+            await this.deadLetterQueueProducer.enqueue({
+                outboxEventId: job.data.outboxEventId,
+                eventId: job.data.eventId,
+                eventName: job.data.eventName,
+                schemaVersion: job.data.schemaVersion,
+                aggregateType: job.data.aggregateType,
+                aggregateId: job.data.aggregateId,
+                payload: job.data.payload,
+                attempts: failedResult.attempts,
+                errorMessage: error.message,
+            });
+        }
         this.logger.error(
             toStructuredLog({
                 level: 'error',
