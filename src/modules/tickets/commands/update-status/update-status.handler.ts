@@ -28,13 +28,13 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
         const ticket = await this.ticketRepository.findByIdOrFail(command.ticketId);
 
         this.policyService.assertCanUpdateStatus(ticket, command.actorId, command.actorRole);
-        this.statusTransitionService.assertValidTransition(ticket.status, command.status);
+        this.statusTransitionService.assertValidTransition(ticket.status, command.dto.status);
 
-        ticket.status = command.status;
+        ticket.status = command.dto.status;
         await this.ticketRepository.save(ticket);
 
         this.eventBus.publish(
-            new TicketStatusUpdatedEvent(command.ticketId, command.status, command.actorId),
+            new TicketStatusUpdatedEvent(command.ticketId, command.dto.status, command.actorId),
         );
         await this.outboxService.createPendingEvent({
             eventName: 'TicketStatusUpdatedEvent',
@@ -42,7 +42,7 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
             aggregateId: command.ticketId.toString(),
             payload: {
                 ticketId: command.ticketId,
-                status: command.status,
+                status: command.dto.status,
                 updatedBy: command.actorId,
             },
         });

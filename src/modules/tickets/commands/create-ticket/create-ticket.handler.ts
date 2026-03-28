@@ -22,8 +22,8 @@ export class CreateTicketHandler implements ICommandHandler<CreateTicketCommand>
      */
     async execute(command: CreateTicketCommand): Promise<{ id: number; success: true }> {
         const ticket = await this.ticketRepository.createAndSave({
-            title: command.title,
-            description: command.description,
+            title: command.dto.title,
+            description: command.dto.description,
             createdBy: command.createdBy,
         });
 

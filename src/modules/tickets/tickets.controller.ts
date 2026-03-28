@@ -93,7 +93,7 @@ export class TicketsController {
     })
     @Post()
     create(@Body() dto: CreateTicketDto, @CurrentUser() user: AuthenticatedUser) {
-        return this.commandBus.execute(new CreateTicketCommand(dto.title, dto.description, user.id));
+        return this.commandBus.execute(new CreateTicketCommand(dto, user.id));
     }
 
     /**
@@ -180,7 +180,7 @@ export class TicketsController {
         @Body() dto: UpdateStatusDto,
         @CurrentUser() user: AuthenticatedUser,
     ) {
-        return this.commandBus.execute(new UpdateStatusCommand(id, dto.status, user.id, user.role));
+        return this.commandBus.execute(new UpdateStatusCommand(id, dto, user.id, user.role));
     }
 
     /**
@@ -267,7 +267,7 @@ export class TicketsController {
         @Body() dto: AssignTicketDto,
         @CurrentUser() user: AuthenticatedUser,
     ) {
-        return this.commandBus.execute(new AssignTicketCommand(id, dto.userId, user.role));
+        return this.commandBus.execute(new AssignTicketCommand(id, dto, user.role));
     }
 
     /**
@@ -335,7 +335,12 @@ export class TicketsController {
     @Get()
     findAll(@Query() query: GetTicketsQueryDto) {
         return this.queryBus.execute(
-            new GetTicketsQuery(query.page ?? 1, query.limit ?? 20, query.status, query.assigneeId),
+            new GetTicketsQuery({
+                page: query.page ?? 1,
+                limit: query.limit ?? 20,
+                status: query.status,
+                assigneeId: query.assigneeId,
+            }),
         );
     }
 
@@ -403,6 +408,6 @@ export class TicketsController {
     })
     @Get(':id')
     findOne(@Param('id', ParseIntPipe) id: number) {
-        return this.queryBus.execute(new GetTicketQuery(id));
+        return this.queryBus.execute(new GetTicketQuery({ ticketId: id }));
     }
 }

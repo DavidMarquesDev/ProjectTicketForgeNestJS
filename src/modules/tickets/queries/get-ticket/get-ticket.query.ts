@@ -1,3 +1,7 @@
+type GetTicketFilter = {
+    ticketId: number;
+};
+
 export class GetTicketQuery {
-    constructor(public readonly ticketId: number) {}
+    constructor(public readonly filter: GetTicketFilter) {}
 }

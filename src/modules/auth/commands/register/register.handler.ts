@@ -1,27 +1,22 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { hash } from 'bcryptjs';
-import { Repository } from 'typeorm';
-import { User, UserRole } from '../../entities/user.entity';
+import { UserRole } from '../../entities/user.entity';
+import { IUserRepository, USER_REPOSITORY } from '../../repositories/user.repository.interface';
 import { RegisterCommand } from './register.command';
 
 type RegisterResult = {
     success: true;
     data: {
         id: number;
-        name: string;
-        cpf: string;
-        email: string;
-        role: UserRole;
     };
 };
 
 @CommandHandler(RegisterCommand)
 export class RegisterHandler implements ICommandHandler<RegisterCommand> {
     constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
+        @Inject(USER_REPOSITORY)
+        private readonly userRepository: IUserRepository,
     ) {}
 
     /**
@@ -32,42 +27,32 @@ export class RegisterHandler implements ICommandHandler<RegisterCommand> {
      * @throws ConflictException When CPF or e-mail already exists.
      */
     async execute(command: RegisterCommand): Promise<RegisterResult> {
-        const userWithEmail = await this.userRepository.exists({
-            where: { email: command.email },
-        });
+        const userWithEmail = await this.userRepository.existsByEmail(command.data.email);
 
         if (userWithEmail) {
             throw new ConflictException('E-mail já cadastrado');
         }
 
-        const userWithCpf = await this.userRepository.exists({
-            where: { cpf: command.cpf },
-        });
+        const userWithCpf = await this.userRepository.existsByCpf(command.data.cpf);
 
         if (userWithCpf) {
             throw new ConflictException('CPF já cadastrado');
         }
 
-        const passwordHash = await hash(command.password, 10);
+        const passwordHash = await hash(command.data.password, 10);
 
-        const createdUser = await this.userRepository.save(
-            this.userRepository.create({
-                name: command.name,
-                cpf: command.cpf,
-                email: command.email,
-                passwordHash,
-                role: UserRole.USER,
-            }),
-        );
+        const createdUser = await this.userRepository.createAndSave({
+            name: command.data.name,
+            cpf: command.data.cpf,
+            email: command.data.email,
+            passwordHash,
+            role: UserRole.USER,
+        });
 
         return {
             success: true,
             data: {
                 id: createdUser.id,
-                name: createdUser.name,
-                cpf: createdUser.cpf,
-                email: createdUser.email,
-                role: createdUser.role,
             },
         };
     }

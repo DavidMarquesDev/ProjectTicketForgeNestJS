@@ -16,7 +16,7 @@ describe('GetCommentsHandler', () => {
         };
         const handler = new GetCommentsHandler(commentRepository as never);
 
-        const result = await handler.execute(new GetCommentsQuery(1));
+        const result = await handler.execute(new GetCommentsQuery({ ticketId: 1 }));
 
         expect(result.success).toBe(true);
         expect(result.data).toHaveLength(1);

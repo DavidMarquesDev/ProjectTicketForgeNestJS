@@ -1,3 +1,7 @@
+type GetCommentsFilter = {
+    ticketId: number;
+};
+
 export class GetCommentsQuery {
-    constructor(public readonly ticketId: number) {}
+    constructor(public readonly filter: GetCommentsFilter) {}
 }

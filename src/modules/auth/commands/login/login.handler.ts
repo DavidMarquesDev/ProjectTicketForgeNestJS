@@ -1,10 +1,8 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { Inject, UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import { compare } from 'bcryptjs';
-import { Repository } from 'typeorm';
-import { User } from '../../entities/user.entity';
+import { IUserRepository, USER_REPOSITORY } from '../../repositories/user.repository.interface';
 import { LoginCommand } from './login.command';
 
 type LoginResult = {
@@ -15,8 +13,8 @@ type LoginResult = {
 @CommandHandler(LoginCommand)
 export class LoginHandler implements ICommandHandler<LoginCommand> {
     constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
+        @Inject(USER_REPOSITORY)
+        private readonly userRepository: IUserRepository,
         private readonly jwtService: JwtService,
     ) {}
 
@@ -28,10 +26,7 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
      * @throws UnauthorizedException When CPF or password is invalid.
      */
     async execute(command: LoginCommand): Promise<LoginResult> {
-        const user = await this.userRepository.findOne({
-            where: { cpf: command.cpf },
-            select: ['id', 'cpf', 'email', 'passwordHash', 'role'],
-        });
+        const user = await this.userRepository.findAuthByCpf(command.cpf);
 
         if (!user) {
             throw new UnauthorizedException('Credenciais inválidas');

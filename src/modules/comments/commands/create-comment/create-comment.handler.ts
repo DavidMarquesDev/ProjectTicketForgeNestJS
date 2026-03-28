@@ -33,7 +33,7 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
         const comment = await this.commentRepository.createAndSave({
             ticketId: command.ticketId,
             authorId: command.authorId,
-            content: command.content,
+            content: command.dto.content,
         });
 
         this.eventBus.publish(new CommentCreatedEvent(comment.id, command.ticketId, command.authorId));

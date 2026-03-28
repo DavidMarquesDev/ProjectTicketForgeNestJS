@@ -30,7 +30,15 @@ describe('CreateCommentHandler', () => {
             outboxService as never,
         );
 
-        const result = await handler.execute(new CreateCommentCommand(1, 1, 'Comentário'));
+        const result = await handler.execute(
+            new CreateCommentCommand(
+                1,
+                1,
+                {
+                    content: 'Comentário',
+                },
+            ),
+        );
 
         expect(result).toEqual({ id: 20, success: true });
         expect(eventBus.publish).toHaveBeenCalled();
@@ -57,8 +65,16 @@ describe('CreateCommentHandler', () => {
             outboxService as never,
         );
 
-        await expect(handler.execute(new CreateCommentCommand(999, 1, 'Comentário'))).rejects.toThrow(
-            NotFoundException,
-        );
+        await expect(
+            handler.execute(
+                new CreateCommentCommand(
+                    999,
+                    1,
+                    {
+                        content: 'Comentário',
+                    },
+                ),
+            ),
+        ).rejects.toThrow(NotFoundException);
     });
 });

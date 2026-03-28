@@ -101,7 +101,7 @@ export class CommentsController {
         @Body() dto: CreateCommentDto,
         @CurrentUser() user: AuthenticatedUser,
     ) {
-        return this.commandBus.execute(new CreateCommentCommand(ticketId, user.id, dto.content));
+        return this.commandBus.execute(new CreateCommentCommand(ticketId, user.id, dto));
     }
 
     /**
@@ -156,6 +156,6 @@ export class CommentsController {
     })
     @Get()
     findAll(@Param('ticketId', ParseIntPipe) ticketId: number) {
-        return this.queryBus.execute(new GetCommentsQuery(ticketId));
+        return this.queryBus.execute(new GetCommentsQuery({ ticketId }));
     }
 }

@@ -33,7 +33,15 @@ describe('CreateTicketHandler', () => {
         };
         const handler = new CreateTicketHandler(repository, eventBus, outboxService as never);
 
-        const result = await handler.execute(new CreateTicketCommand('Título', 'Descrição detalhada', 1));
+        const result = await handler.execute(
+            new CreateTicketCommand(
+                {
+                    title: 'Título',
+                    description: 'Descrição detalhada',
+                },
+                1,
+            ),
+        );
 
         expect(result).toEqual({ id: 1, success: true });
         expect(repository.createAndSave).toHaveBeenCalled();

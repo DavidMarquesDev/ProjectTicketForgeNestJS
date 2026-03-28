@@ -13,7 +13,15 @@ describe('AssignTicketHandler', () => {
         };
         const handler = new AssignTicketHandler(ticketRepository as never, policyService as never);
 
-        const result = await handler.execute(new AssignTicketCommand(1, 2, UserRole.SUPPORT));
+        const result = await handler.execute(
+            new AssignTicketCommand(
+                1,
+                {
+                    userId: 2,
+                },
+                UserRole.SUPPORT,
+            ),
+        );
 
         expect(result).toEqual({ id: 1, success: true });
         expect(policyService.assertCanAssign).toHaveBeenCalledWith(UserRole.SUPPORT);

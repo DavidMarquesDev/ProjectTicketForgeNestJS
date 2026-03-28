@@ -19,7 +19,7 @@ export class GetTicketHandler implements IQueryHandler<GetTicketQuery> {
      * @throws NotFoundException When ticket does not exist.
      */
     async execute(query: GetTicketQuery): Promise<{ success: true; data: Ticket }> {
-        const ticket = await this.ticketRepository.findOneDetailed(query.ticketId);
+        const ticket = await this.ticketRepository.findOneDetailed(query.filter.ticketId);
 
         if (!ticket) {
             throw new NotFoundException('Ticket não encontrado');

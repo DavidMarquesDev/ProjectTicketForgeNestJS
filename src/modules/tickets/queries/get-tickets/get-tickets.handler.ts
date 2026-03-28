@@ -30,10 +30,10 @@ export class GetTicketsHandler implements IQueryHandler<GetTicketsQuery> {
      */
     async execute(query: GetTicketsQuery): Promise<GetTicketsResult> {
         const result = await this.ticketRepository.paginate({
-            page: query.page,
-            limit: query.limit,
-            status: query.status,
-            assigneeId: query.assigneeId,
+            page: query.filters.page,
+            limit: query.filters.limit,
+            status: query.filters.status,
+            assigneeId: query.filters.assigneeId,
         });
 
         return {

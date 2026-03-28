@@ -1,8 +1,8 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { hash } from 'bcryptjs';
-import { Repository } from 'typeorm';
 import { User, UserRole } from '../../entities/user.entity';
+import { IUserRepository } from '../../repositories/user.repository.interface';
 import { LoginCommand } from './login.command';
 import { LoginHandler } from './login.handler';
 
@@ -17,8 +17,8 @@ describe('LoginHandler', () => {
             role: UserRole.USER,
         } as User;
         const userRepository = {
-            findOne: jest.fn().mockResolvedValue(user),
-        } as unknown as Repository<User>;
+            findAuthByCpf: jest.fn().mockResolvedValue(user),
+        } as unknown as IUserRepository;
         const jwtService = {
             sign: jest.fn().mockReturnValue('jwt-token'),
         } as unknown as JwtService;
@@ -36,8 +36,8 @@ describe('LoginHandler', () => {
 
     it('deve lançar erro para usuário inexistente', async () => {
         const userRepository = {
-            findOne: jest.fn().mockResolvedValue(null),
-        } as unknown as Repository<User>;
+            findAuthByCpf: jest.fn().mockResolvedValue(null),
+        } as unknown as IUserRepository;
         const jwtService = {
             sign: jest.fn(),
         } as unknown as JwtService;

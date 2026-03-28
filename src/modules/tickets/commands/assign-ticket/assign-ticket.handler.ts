@@ -22,7 +22,7 @@ export class AssignTicketHandler implements ICommandHandler<AssignTicketCommand>
         this.policyService.assertCanAssign(command.actorRole);
 
         await this.ticketRepository.findByIdOrFail(command.ticketId);
-        await this.ticketRepository.assign(command.ticketId, command.assigneeId);
+        await this.ticketRepository.assign(command.ticketId, command.dto.userId);
 
         return { id: command.ticketId, success: true };
     }

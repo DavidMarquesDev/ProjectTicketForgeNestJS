@@ -21,7 +21,14 @@ describe('GetTicketsHandler', () => {
         };
         const handler = new GetTicketsHandler(repository);
 
-        const response = await handler.execute(new GetTicketsQuery(1, 20, TicketStatus.OPEN, undefined));
+        const response = await handler.execute(
+            new GetTicketsQuery({
+                page: 1,
+                limit: 20,
+                status: TicketStatus.OPEN,
+                assigneeId: undefined,
+            }),
+        );
 
         expect(response.success).toBe(true);
         expect(response.meta.totalPages).toBe(1);

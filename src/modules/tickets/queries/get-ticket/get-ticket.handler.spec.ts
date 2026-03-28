@@ -21,7 +21,7 @@ describe('GetTicketHandler', () => {
         };
         const handler = new GetTicketHandler(ticketRepository as never);
 
-        const result = await handler.execute(new GetTicketQuery(1));
+        const result = await handler.execute(new GetTicketQuery({ ticketId: 1 }));
 
         expect(result.success).toBe(true);
         expect(result.data.id).toBe(1);
@@ -33,6 +33,8 @@ describe('GetTicketHandler', () => {
         };
         const handler = new GetTicketHandler(ticketRepository as never);
 
-        await expect(handler.execute(new GetTicketQuery(999))).rejects.toThrow(NotFoundException);
+        await expect(handler.execute(new GetTicketQuery({ ticketId: 999 }))).rejects.toThrow(
+            NotFoundException,
+        );
     });
 });

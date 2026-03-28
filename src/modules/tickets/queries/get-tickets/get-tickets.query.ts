@@ -1,10 +1,12 @@
 import { TicketStatus } from '../../entities/ticket-status.enum';
 
+type GetTicketsFilters = {
+    page: number;
+    limit: number;
+    status?: TicketStatus;
+    assigneeId?: number;
+};
+
 export class GetTicketsQuery {
-    constructor(
-        public readonly page: number,
-        public readonly limit: number,
-        public readonly status?: TicketStatus,
-        public readonly assigneeId?: number,
-    ) {}
+    constructor(public readonly filters: GetTicketsFilters) {}
 }

@@ -1,7 +1,8 @@
+import { CreateTicketDto } from '../../dto/create-ticket.dto';
+
 export class CreateTicketCommand {
     constructor(
-        public readonly title: string,
-        public readonly description: string,
+        public readonly dto: CreateTicketDto,
         public readonly createdBy: number,
     ) {}
 }

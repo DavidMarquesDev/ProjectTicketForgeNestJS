@@ -37,7 +37,14 @@ describe('UpdateStatusHandler', () => {
         );
 
         const result = await handler.execute(
-            new UpdateStatusCommand(1, TicketStatus.IN_PROGRESS, 10, UserRole.SUPPORT),
+            new UpdateStatusCommand(
+                1,
+                {
+                    status: TicketStatus.IN_PROGRESS,
+                },
+                10,
+                UserRole.SUPPORT,
+            ),
         );
 
         expect(result).toEqual({ id: 1, success: true });

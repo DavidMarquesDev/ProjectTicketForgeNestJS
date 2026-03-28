@@ -10,6 +10,8 @@ import { LogoutHandler } from './commands/logout/logout.handler';
 import { RegisterHandler } from './commands/register/register.handler';
 import { User } from './entities/user.entity';
 import { GetMeHandler } from './queries/get-me/get-me.handler';
+import { USER_REPOSITORY } from './repositories/user.repository.interface';
+import { UserTypeOrmRepository } from './repositories/user.typeorm.repository';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 const commandHandlers = [LoginHandler, LogoutHandler, RegisterHandler];
@@ -32,7 +34,16 @@ const queryHandlers = [GetMeHandler];
         TypeOrmModule.forFeature([User]),
     ],
     controllers: [AuthController],
-    providers: [JwtStrategy, ...commandHandlers, ...queryHandlers],
-    exports: [JwtModule, TypeOrmModule],
+    providers: [
+        JwtStrategy,
+        UserTypeOrmRepository,
+        {
+            provide: USER_REPOSITORY,
+            useExisting: UserTypeOrmRepository,
+        },
+        ...commandHandlers,
+        ...queryHandlers,
+    ],
+    exports: [JwtModule, TypeOrmModule, USER_REPOSITORY],
 })
 export class AuthModule {}

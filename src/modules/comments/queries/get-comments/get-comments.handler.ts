@@ -18,7 +18,7 @@ export class GetCommentsHandler implements IQueryHandler<GetCommentsQuery> {
      * @returns Ticket comments payload.
      */
     async execute(query: GetCommentsQuery): Promise<{ success: true; data: Comment[] }> {
-        const comments = await this.commentRepository.findByTicket(query.ticketId);
+        const comments = await this.commentRepository.findByTicket(query.filter.ticketId);
         return { success: true, data: comments };
     }
 }
