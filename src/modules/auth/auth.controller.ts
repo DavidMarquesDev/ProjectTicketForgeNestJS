@@ -20,7 +20,7 @@ export class AuthController {
 
     @Post('login')
     login(@Body() dto: LoginDto) {
-        return this.commandBus.execute(new LoginCommand(dto.email, dto.password));
+        return this.commandBus.execute(new LoginCommand(dto.cpf, dto.password));
     }
 
     @Post('register')

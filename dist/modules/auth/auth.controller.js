@@ -30,7 +30,7 @@ let AuthController = class AuthController {
         this.queryBus = queryBus;
     }
     login(dto) {
-        return this.commandBus.execute(new login_command_1.LoginCommand(dto.email, dto.password));
+        return this.commandBus.execute(new login_command_1.LoginCommand(dto.cpf, dto.password));
     }
     register(dto) {
         return this.commandBus.execute(new register_command_1.RegisterCommand(dto.name, dto.cpf, dto.email, dto.password));

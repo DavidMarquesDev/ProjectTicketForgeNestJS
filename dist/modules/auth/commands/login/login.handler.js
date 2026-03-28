@@ -28,8 +28,8 @@ let LoginHandler = class LoginHandler {
     }
     async execute(command) {
         const user = await this.userRepository.findOne({
-            where: { email: command.email },
-            select: ['id', 'email', 'passwordHash', 'role'],
+            where: { cpf: command.cpf },
+            select: ['id', 'cpf', 'email', 'passwordHash', 'role'],
         });
         if (!user) {
             throw new common_1.UnauthorizedException('Credenciais inválidas');

@@ -1,5 +1,5 @@
 export declare class LoginCommand {
-    readonly email: string;
+    readonly cpf: string;
     readonly password: string;
-    constructor(email: string, password: string);
+    constructor(cpf: string, password: string);
 }

@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsString, Matches, MinLength } from 'class-validator';
 
 export class LoginDto {
-    @ApiProperty()
-    @IsEmail()
-    email: string;
+    @ApiProperty({ example: '12345678901' })
+    @IsString()
+    @Matches(/^\d{11}$/)
+    cpf: string;
 
     @ApiProperty()
     @IsString()

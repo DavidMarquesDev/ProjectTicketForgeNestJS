@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoginCommand = void 0;
 class LoginCommand {
-    constructor(email, password) {
-        this.email = email;
+    constructor(cpf, password) {
+        this.cpf = cpf;
         this.password = password;
     }
 }
