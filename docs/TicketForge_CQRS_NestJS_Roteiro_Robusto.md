@@ -292,6 +292,26 @@ Resposta de paginação:
 - Revisão de segurança (authn/authz/rate limit).
 - Revisão de performance (queries, índices, paginação).
 
+## Fase 8 — Hardening Final
+
+- Garantir fail-fast de configuração por ambiente (`NODE_ENV` e variáveis obrigatórias).
+- Consolidar validação de erro com envelope padronizado e `trace_id`.
+- Aplicar índices adicionais para consultas críticas de listagem.
+- Validar fluxo completo com lint, build, testes unitários, cobertura e e2e.
+
+## 12.1 Checklist de Auditoria — Fase x Evidência
+
+| Checklist | Fase | Status | Evidência técnica | Risco residual | Ação de mitigação |
+| --- | --- | --- | --- | --- | --- |
+| [x] | Fase 1 — Fundação | Concluída | `ValidationPipe`, prefixo global e bootstrap em `src/main.ts`; TypeORM e configuração base em `src/app.module.ts`. | Baixo: evolução de bootstrap sem impacto contratual. | Executar smoke test de inicialização a cada alteração em bootstrap/configuração global. |
+| [x] | Fase 2 — Auth e Segurança | Concluída | Login/me/guards em `src/modules/auth`; rate limit em endpoints públicos no controller de auth. | Baixo: endurecer limites por ambiente conforme tráfego real. | Revisar limites por ambiente e acompanhar métricas de `429` mensalmente. |
+| [x] | Fase 3 — Tickets (Command Side) | Concluída | Commands/handlers de criação, atribuição e atualização de status em `src/modules/tickets/commands`. | Baixo: monitorar novas regras de transição de status. | Incluir teste unitário por nova transição e validar política de autorização associada. |
+| [x] | Fase 4 — Tickets (Query Side) | Concluída | Queries com paginação/filtros em `src/modules/tickets/queries`; repositório com ordenação e metadados. | Baixo: revisar planos de execução em crescimento de volume. | Rodar análise de plano de execução trimestral das queries mais usadas. |
+| [x] | Fase 5 — Comentários | Concluída | Command/query de comentários em `src/modules/comments`; evento de comentário criado. | Baixo: manter cobertura para regras de autoria em novos cenários. | Expandir cenários de autoria no e2e quando houver novos perfis/permissões. |
+| [x] | Fase 6 — Observabilidade e Assíncrono | Concluída | Correlation id, logs estruturados, outbox e fila em `src/main.ts`, `src/common/logging`, `src/modules/outbox`, `src/modules/async-processing`. | Médio: ampliar monitoramento operacional da fila e reprocessamento. | Criar alertas para fila/outbox (lag, falhas e retries) com rotina de revisão diária. |
+| [x] | Fase 7 — Qualidade e Go-Live | Concluída | Gate de cobertura em handlers no `package.json`; e2e cobrindo cenários críticos em `test/app.e2e-spec.ts`. | Baixo: expandir casos e2e de regressão em novas features. | Tornar obrigatório adicionar teste de regressão e2e para cada endpoint crítico novo. |
+| [x] | Fase 8 — Hardening Final | Concluída | Regras de ambiente em `src/app.module.ts`; índices em `src/database/migrations/20260328000100-AddTicketsListIndexes.ts`; validação final com lint/build/testes. | Baixo: revisar índices periodicamente conforme padrão de uso. | Revisar seletividade de índices com base em métricas reais e ajustar migrations evolutivas. |
+
 ---
 
 ## 13. Estratégia de Testes

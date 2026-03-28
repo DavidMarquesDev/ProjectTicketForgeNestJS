@@ -9,7 +9,7 @@ import { OutboxModule } from './modules/outbox/outbox.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 
 const asyncQueueModules = process.env.ASYNC_QUEUE_ENABLED === 'true' ? [AsyncProcessingModule] : [];
-const requiredEnvironmentVariables = ['JWT_SECRET'] as const;
+const requiredEnvironmentVariables = ['JWT_SECRET', 'JWT_EXPIRES_IN'] as const;
 const localNodeEnvironments = ['development', 'test', 'local'] as const;
 const databaseUrlRequiredNodeEnvironments = [
     'production',

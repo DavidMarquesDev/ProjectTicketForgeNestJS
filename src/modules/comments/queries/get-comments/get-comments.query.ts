@@ -1,4 +1,6 @@
-type GetCommentsFilter = {
+import { type CommentPaginationParams } from '../../repositories/comment.repository.interface';
+
+type GetCommentsFilter = CommentPaginationParams & {
     ticketId: number;
 };
 

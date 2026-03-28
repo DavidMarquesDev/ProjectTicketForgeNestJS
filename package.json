@@ -82,6 +82,13 @@
         "collectCoverageFrom": [
             "**/*.(t|j)s"
         ],
+        "coverageThreshold": {
+            "**/{commands,queries}/**/*.handler.ts": {
+                "functions": 80,
+                "lines": 80,
+                "statements": 80
+            }
+        },
         "coverageDirectory": "../coverage",
         "testEnvironment": "node"
     }
