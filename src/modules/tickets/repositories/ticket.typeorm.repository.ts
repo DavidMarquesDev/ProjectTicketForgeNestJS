@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Ticket } from '../entities/ticket.entity';
@@ -6,6 +6,8 @@ import {
     ITicketRepository,
     PaginatedTickets,
     TicketPaginationParams,
+    TicketSortBy,
+    TicketSortOrder,
 } from './ticket.repository.interface';
 
 @Injectable()
@@ -24,17 +26,11 @@ export class TicketTypeOrmRepository implements ITicketRepository {
         return this.ormRepository.save(ticket);
     }
 
-    async findByIdOrFail(ticketId: number): Promise<Ticket> {
-        const ticket = await this.ormRepository.findOne({
+    async findById(ticketId: number): Promise<Ticket | null> {
+        return this.ormRepository.findOne({
             where: { id: ticketId },
             relations: { creator: true, assignee: true },
         });
-
-        if (!ticket) {
-            throw new NotFoundException('Ticket não encontrado');
-        }
-
-        return ticket;
     }
 
     async save(ticket: Ticket): Promise<Ticket> {
@@ -46,11 +42,18 @@ export class TicketTypeOrmRepository implements ITicketRepository {
     }
 
     async paginate(params: TicketPaginationParams): Promise<PaginatedTickets> {
+        const sortColumnByField: Record<TicketSortBy, string> = {
+            [TicketSortBy.CREATED_AT]: 'ticket.createdAt',
+            [TicketSortBy.UPDATED_AT]: 'ticket.updatedAt',
+            [TicketSortBy.STATUS]: 'ticket.status',
+        };
+        const sortField = params.sortBy ?? TicketSortBy.CREATED_AT;
+        const sortOrder = params.order ?? TicketSortOrder.DESC;
         const queryBuilder = this.ormRepository
             .createQueryBuilder('ticket')
             .leftJoinAndSelect('ticket.creator', 'creator')
             .leftJoinAndSelect('ticket.assignee', 'assignee')
-            .orderBy('ticket.createdAt', 'DESC');
+            .orderBy(sortColumnByField[sortField], sortOrder);
 
         if (params.status) {
             queryBuilder.andWhere('ticket.status = :status', { status: params.status });

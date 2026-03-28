@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AssignTicketCommand } from './assign-ticket.command';
 import { TicketPolicyService } from '../../policies/ticket-policy.service';
@@ -21,7 +21,10 @@ export class AssignTicketHandler implements ICommandHandler<AssignTicketCommand>
     async execute(command: AssignTicketCommand): Promise<{ id: number; success: true }> {
         this.policyService.assertCanAssign(command.actorRole);
 
-        await this.ticketRepository.findByIdOrFail(command.ticketId);
+        const ticket = await this.ticketRepository.findById(command.ticketId);
+        if (!ticket) {
+            throw new NotFoundException('Ticket não encontrado');
+        }
         await this.ticketRepository.assign(command.ticketId, command.dto.userId);
 
         return { id: command.ticketId, success: true };

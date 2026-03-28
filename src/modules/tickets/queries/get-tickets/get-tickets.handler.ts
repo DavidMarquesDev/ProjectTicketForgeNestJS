@@ -34,6 +34,8 @@ export class GetTicketsHandler implements IQueryHandler<GetTicketsQuery> {
             limit: query.filters.limit,
             status: query.filters.status,
             assigneeId: query.filters.assigneeId,
+            sortBy: query.filters.sortBy,
+            order: query.filters.order,
         });
 
         return {

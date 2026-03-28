@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateStatusCommand } from './update-status.command';
 import { OutboxService } from '../../../outbox/outbox.service';
@@ -25,7 +25,11 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
      * @returns Updated ticket identifier.
      */
     async execute(command: UpdateStatusCommand): Promise<{ id: number; success: true }> {
-        const ticket = await this.ticketRepository.findByIdOrFail(command.ticketId);
+        const ticket = await this.ticketRepository.findById(command.ticketId);
+
+        if (!ticket) {
+            throw new NotFoundException('Ticket não encontrado');
+        }
 
         this.policyService.assertCanUpdateStatus(ticket, command.actorId, command.actorRole);
         this.statusTransitionService.assertValidTransition(ticket.status, command.dto.status);

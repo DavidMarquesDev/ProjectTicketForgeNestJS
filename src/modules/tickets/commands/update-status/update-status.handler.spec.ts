@@ -13,7 +13,7 @@ describe('UpdateStatusHandler', () => {
             assignedTo: null,
         };
         const ticketRepository = {
-            findByIdOrFail: jest.fn().mockResolvedValue(ticket),
+            findById: jest.fn().mockResolvedValue(ticket),
             save: jest.fn().mockResolvedValue({ ...ticket, status: TicketStatus.IN_PROGRESS }),
         };
         const policyService = {

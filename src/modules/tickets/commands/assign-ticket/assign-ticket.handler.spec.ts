@@ -5,7 +5,7 @@ import { AssignTicketHandler } from './assign-ticket.handler';
 describe('AssignTicketHandler', () => {
     it('deve atribuir ticket com sucesso', async () => {
         const ticketRepository = {
-            findByIdOrFail: jest.fn().mockResolvedValue({ id: 1 }),
+            findById: jest.fn().mockResolvedValue({ id: 1 }),
             assign: jest.fn().mockResolvedValue(undefined),
         };
         const policyService = {

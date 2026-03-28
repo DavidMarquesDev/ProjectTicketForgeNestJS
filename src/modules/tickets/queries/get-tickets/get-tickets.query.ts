@@ -1,11 +1,6 @@
-import { TicketStatus } from '../../entities/ticket-status.enum';
+import { TicketPaginationParams } from '../../repositories/ticket.repository.interface';
 
-type GetTicketsFilters = {
-    page: number;
-    limit: number;
-    status?: TicketStatus;
-    assigneeId?: number;
-};
+export type GetTicketsFilters = TicketPaginationParams;
 
 export class GetTicketsQuery {
     constructor(public readonly filters: GetTicketsFilters) {}

@@ -19,7 +19,7 @@ describe('CreateTicketHandler', () => {
                 createdAt: new Date(),
                 updatedAt: new Date(),
             }),
-            findByIdOrFail: jest.fn(),
+            findById: jest.fn(),
             save: jest.fn(),
             assign: jest.fn(),
             paginate: jest.fn(),

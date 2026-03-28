@@ -16,6 +16,31 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser, type AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import {
+    assignTicketApiBadRequestResponse,
+    assignTicketApiBody,
+    assignTicketApiForbiddenResponse,
+    assignTicketApiOkResponse,
+    assignTicketApiOperation,
+    createTicketApiBadRequestResponse,
+    createTicketApiBody,
+    createTicketApiCreatedResponse,
+    createTicketApiOperation,
+    getTicketApiBadRequestResponse,
+    getTicketApiOkResponse,
+    getTicketApiOperation,
+    listTicketsApiBadRequestResponse,
+    listTicketsApiOkResponse,
+    listTicketsApiOperation,
+    ticketApiNotFoundResponse,
+    ticketApiUnauthorizedResponse,
+    updateStatusApiBadRequestResponse,
+    updateStatusApiBody,
+    updateStatusApiForbiddenResponse,
+    updateStatusApiOkResponse,
+    updateStatusApiOperation,
+    updateStatusApiParam,
+} from './api/tickets.http-documentation';
 import { AssignTicketCommand } from './commands/assign-ticket/assign-ticket.command';
 import { CreateTicketCommand } from './commands/create-ticket/create-ticket.command';
 import { UpdateStatusCommand } from './commands/update-status/update-status.command';
@@ -43,54 +68,11 @@ export class TicketsController {
      * @param user Authenticated user extracted from JWT.
      * @returns Created ticket identifier.
      */
-    @ApiOperation({
-        summary: 'Create a new ticket',
-        description: 'Creates a ticket using title and description for the authenticated user.',
-    })
-    @ApiBody({
-        type: CreateTicketDto,
-        description: 'Ticket creation payload',
-        examples: {
-            valid: {
-                summary: 'Valid ticket',
-                value: {
-                    title: 'Payment gateway timeout',
-                    description: 'Users report timeout when confirming card payment in checkout.',
-                },
-            },
-        },
-    })
-    @ApiCreatedResponse({
-        description: 'Ticket created successfully',
-        schema: {
-            example: {
-                id: 101,
-                success: true,
-            },
-        },
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Missing or invalid token',
-        schema: {
-            example: {
-                success: false,
-                message: 'Unauthorized',
-                code: 'UNAUTHORIZED',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiBadRequestResponse({
-        description: 'Validation error',
-        schema: {
-            example: {
-                success: false,
-                message: 'description must be longer than or equal to 10 characters',
-                code: 'BAD_REQUEST',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
+    @ApiOperation(createTicketApiOperation)
+    @ApiBody(createTicketApiBody)
+    @ApiCreatedResponse(createTicketApiCreatedResponse)
+    @ApiUnauthorizedResponse(ticketApiUnauthorizedResponse)
+    @ApiBadRequestResponse(createTicketApiBadRequestResponse)
     @Post()
     create(@Body() dto: CreateTicketDto, @CurrentUser() user: AuthenticatedUser) {
         return this.commandBus.execute(new CreateTicketCommand(dto, user.id));
@@ -104,76 +86,14 @@ export class TicketsController {
      * @param user Authenticated user extracted from JWT.
      * @returns Updated ticket identifier.
      */
-    @ApiOperation({
-        summary: 'Update ticket status',
-        description: 'Updates status according to transition rules and authorization policy.',
-    })
-    @ApiParam({ name: 'id', example: 101, description: 'Ticket identifier' })
-    @ApiBody({
-        type: UpdateStatusDto,
-        description: 'New ticket status payload',
-        examples: {
-            valid: {
-                summary: 'Move OPEN to IN_PROGRESS',
-                value: {
-                    status: 'in_progress',
-                },
-            },
-        },
-    })
-    @ApiOkResponse({
-        description: 'Ticket status updated successfully',
-        schema: {
-            example: {
-                id: 101,
-                success: true,
-            },
-        },
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Missing or invalid token',
-        schema: {
-            example: {
-                success: false,
-                message: 'Unauthorized',
-                code: 'UNAUTHORIZED',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiForbiddenResponse({
-        description: 'User has no permission to update status',
-        schema: {
-            example: {
-                success: false,
-                message: 'Usuário não possui permissão para atualizar status',
-                code: 'FORBIDDEN',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiNotFoundResponse({
-        description: 'Ticket not found',
-        schema: {
-            example: {
-                success: false,
-                message: 'Ticket não encontrado',
-                code: 'NOT_FOUND',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiBadRequestResponse({
-        description: 'Validation error',
-        schema: {
-            example: {
-                success: false,
-                message: 'status must be a valid enum value',
-                code: 'BAD_REQUEST',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
+    @ApiOperation(updateStatusApiOperation)
+    @ApiParam(updateStatusApiParam)
+    @ApiBody(updateStatusApiBody)
+    @ApiOkResponse(updateStatusApiOkResponse)
+    @ApiUnauthorizedResponse(ticketApiUnauthorizedResponse)
+    @ApiForbiddenResponse(updateStatusApiForbiddenResponse)
+    @ApiNotFoundResponse(ticketApiNotFoundResponse)
+    @ApiBadRequestResponse(updateStatusApiBadRequestResponse)
     @Patch(':id/status')
     updateStatus(
         @Param('id', ParseIntPipe) id: number,
@@ -191,76 +111,14 @@ export class TicketsController {
      * @param user Authenticated user extracted from JWT.
      * @returns Updated ticket identifier.
      */
-    @ApiOperation({
-        summary: 'Assign ticket to a user',
-        description: 'Assigns a ticket to another user when actor role is support or admin.',
-    })
-    @ApiParam({ name: 'id', example: 101, description: 'Ticket identifier' })
-    @ApiBody({
-        type: AssignTicketDto,
-        description: 'Target assignee payload',
-        examples: {
-            valid: {
-                summary: 'Assign to support user',
-                value: {
-                    userId: 2,
-                },
-            },
-        },
-    })
-    @ApiOkResponse({
-        description: 'Ticket assigned successfully',
-        schema: {
-            example: {
-                id: 101,
-                success: true,
-            },
-        },
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Missing or invalid token',
-        schema: {
-            example: {
-                success: false,
-                message: 'Unauthorized',
-                code: 'UNAUTHORIZED',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiForbiddenResponse({
-        description: 'User has no permission to assign ticket',
-        schema: {
-            example: {
-                success: false,
-                message: 'Apenas suporte ou admin podem atribuir ticket',
-                code: 'FORBIDDEN',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiNotFoundResponse({
-        description: 'Ticket not found',
-        schema: {
-            example: {
-                success: false,
-                message: 'Ticket não encontrado',
-                code: 'NOT_FOUND',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiBadRequestResponse({
-        description: 'Validation error',
-        schema: {
-            example: {
-                success: false,
-                message: 'userId must not be less than 1',
-                code: 'BAD_REQUEST',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
+    @ApiOperation(assignTicketApiOperation)
+    @ApiParam(updateStatusApiParam)
+    @ApiBody(assignTicketApiBody)
+    @ApiOkResponse(assignTicketApiOkResponse)
+    @ApiUnauthorizedResponse(ticketApiUnauthorizedResponse)
+    @ApiForbiddenResponse(assignTicketApiForbiddenResponse)
+    @ApiNotFoundResponse(ticketApiNotFoundResponse)
+    @ApiBadRequestResponse(assignTicketApiBadRequestResponse)
     @Patch(':id/assign')
     assign(
         @Param('id', ParseIntPipe) id: number,
@@ -276,62 +134,16 @@ export class TicketsController {
      * @param query Ticket filters and pagination params.
      * @returns Paginated list of tickets.
      */
-    @ApiOperation({
-        summary: 'List tickets with pagination and filters',
-        description: 'Returns paginated tickets filtered by optional status and assignee.',
-    })
+    @ApiOperation(listTicketsApiOperation)
     @ApiQuery({ name: 'status', required: false, example: 'open' })
     @ApiQuery({ name: 'assigneeId', required: false, example: 2 })
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 20 })
-    @ApiOkResponse({
-        description: 'Tickets returned successfully',
-        schema: {
-            example: {
-                success: true,
-                data: [
-                    {
-                        id: 101,
-                        title: 'Payment gateway timeout',
-                        description: 'Users report timeout when confirming card payment in checkout.',
-                        status: 'open',
-                        createdBy: 1,
-                        assignedTo: 2,
-                        createdAt: '2026-03-27T12:00:00.000Z',
-                        updatedAt: '2026-03-27T12:00:00.000Z',
-                    },
-                ],
-                meta: {
-                    page: 1,
-                    limit: 20,
-                    total: 1,
-                    totalPages: 1,
-                },
-            },
-        },
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Missing or invalid token',
-        schema: {
-            example: {
-                success: false,
-                message: 'Unauthorized',
-                code: 'UNAUTHORIZED',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiBadRequestResponse({
-        description: 'Validation error',
-        schema: {
-            example: {
-                success: false,
-                message: 'limit must not be greater than 100',
-                code: 'BAD_REQUEST',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
+    @ApiQuery({ name: 'sortBy', required: false, example: 'createdAt' })
+    @ApiQuery({ name: 'order', required: false, example: 'DESC' })
+    @ApiOkResponse(listTicketsApiOkResponse)
+    @ApiUnauthorizedResponse(ticketApiUnauthorizedResponse)
+    @ApiBadRequestResponse(listTicketsApiBadRequestResponse)
     @Get()
     findAll(@Query() query: GetTicketsQueryDto) {
         return this.queryBus.execute(
@@ -340,6 +152,8 @@ export class TicketsController {
                 limit: query.limit ?? 20,
                 status: query.status,
                 assigneeId: query.assigneeId,
+                sortBy: query.sortBy,
+                order: query.order,
             }),
         );
     }
@@ -350,62 +164,12 @@ export class TicketsController {
      * @param id Ticket identifier.
      * @returns Detailed ticket data.
      */
-    @ApiOperation({
-        summary: 'Get ticket details by id',
-        description: 'Returns one detailed ticket, including relational data when available.',
-    })
-    @ApiParam({ name: 'id', example: 101, description: 'Ticket identifier' })
-    @ApiOkResponse({
-        description: 'Ticket details returned successfully',
-        schema: {
-            example: {
-                success: true,
-                data: {
-                    id: 101,
-                    title: 'Payment gateway timeout',
-                    description: 'Users report timeout when confirming card payment in checkout.',
-                    status: 'open',
-                    createdBy: 1,
-                    assignedTo: 2,
-                    createdAt: '2026-03-27T12:00:00.000Z',
-                    updatedAt: '2026-03-27T12:00:00.000Z',
-                },
-            },
-        },
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Missing or invalid token',
-        schema: {
-            example: {
-                success: false,
-                message: 'Unauthorized',
-                code: 'UNAUTHORIZED',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiNotFoundResponse({
-        description: 'Ticket not found',
-        schema: {
-            example: {
-                success: false,
-                message: 'Ticket não encontrado',
-                code: 'NOT_FOUND',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
-    @ApiBadRequestResponse({
-        description: 'Validation error',
-        schema: {
-            example: {
-                success: false,
-                message: 'Validation failed (numeric string is expected)',
-                code: 'BAD_REQUEST',
-                trace_id: '64a9b8e4-71f2-49b6-8c27-aed216c3ad7a',
-            },
-        },
-    })
+    @ApiOperation(getTicketApiOperation)
+    @ApiParam(updateStatusApiParam)
+    @ApiOkResponse(getTicketApiOkResponse)
+    @ApiUnauthorizedResponse(ticketApiUnauthorizedResponse)
+    @ApiNotFoundResponse(ticketApiNotFoundResponse)
+    @ApiBadRequestResponse(getTicketApiBadRequestResponse)
     @Get(':id')
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.queryBus.execute(new GetTicketQuery({ ticketId: id }));

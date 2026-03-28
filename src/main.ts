@@ -6,6 +6,7 @@ import { NextFunction, Request, Response } from 'express';
 import redoc from 'redoc-express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { SuccessResponseInterceptor } from './common/interceptors/success-response.interceptor';
 
 /**
  * Boots the HTTP application with global API configuration.
@@ -34,6 +35,7 @@ async function bootstrap(): Promise<void> {
         }),
     );
     app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalInterceptors(new SuccessResponseInterceptor());
 
     const config = new DocumentBuilder()
         .setTitle('TicketForge API')

@@ -1,5 +1,9 @@
 import { GetTicketsHandler } from './get-tickets.handler';
-import { ITicketRepository } from '../../repositories/ticket.repository.interface';
+import {
+    ITicketRepository,
+    TicketSortBy,
+    TicketSortOrder,
+} from '../../repositories/ticket.repository.interface';
 import { TicketStatus } from '../../entities/ticket-status.enum';
 import { GetTicketsQuery } from './get-tickets.query';
 
@@ -7,7 +11,7 @@ describe('GetTicketsHandler', () => {
     it('deve retornar paginação com sucesso', async () => {
         const repository: ITicketRepository = {
             createAndSave: jest.fn(),
-            findByIdOrFail: jest.fn(),
+            findById: jest.fn(),
             save: jest.fn(),
             assign: jest.fn(),
             findOneDetailed: jest.fn(),
@@ -21,14 +25,16 @@ describe('GetTicketsHandler', () => {
         };
         const handler = new GetTicketsHandler(repository);
 
-        const response = await handler.execute(
-            new GetTicketsQuery({
-                page: 1,
-                limit: 20,
-                status: TicketStatus.OPEN,
-                assigneeId: undefined,
-            }),
-        );
+        const queryFilters = {
+            page: 1,
+            limit: 20,
+            status: TicketStatus.OPEN,
+            assigneeId: undefined,
+            sortBy: TicketSortBy.CREATED_AT,
+            order: TicketSortOrder.DESC,
+        } as ConstructorParameters<typeof GetTicketsQuery>[0];
+
+        const response = await handler.execute(new GetTicketsQuery(queryFilters));
 
         expect(response.success).toBe(true);
         expect(response.meta.totalPages).toBe(1);
@@ -37,6 +43,8 @@ describe('GetTicketsHandler', () => {
             limit: 20,
             status: TicketStatus.OPEN,
             assigneeId: undefined,
+            sortBy: TicketSortBy.CREATED_AT,
+            order: TicketSortOrder.DESC,
         });
     });
 });
