@@ -1,7 +1,7 @@
 import { Inject, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { AuditTrailService } from '../../../audit/services/audit-trail.service';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { AssignTicketCommand } from './assign-ticket.command';
+import { TicketAssignedEvent } from '../../events/contracts';
 import { TicketPolicyService } from '../../policies/ticket-policy.service';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../repositories/ticket.repository.interface';
 
@@ -11,7 +11,7 @@ export class AssignTicketHandler implements ICommandHandler<AssignTicketCommand>
         @Inject(TICKET_REPOSITORY)
         private readonly ticketRepository: ITicketRepository,
         private readonly policyService: TicketPolicyService,
-        private readonly auditTrailService: AuditTrailService,
+        private readonly eventBus: EventBus,
     ) {}
 
     /**
@@ -28,15 +28,13 @@ export class AssignTicketHandler implements ICommandHandler<AssignTicketCommand>
             throw new NotFoundException('Ticket não encontrado');
         }
         await this.ticketRepository.assign(command.ticketId, command.dto.userId);
-        await this.auditTrailService.record({
-            action: 'ticket_assigned',
-            aggregateType: 'ticket',
-            aggregateId: command.ticketId.toString(),
-            actorId: command.actorId,
-            metadata: {
-                assignedTo: command.dto.userId,
-            },
-        });
+        this.eventBus.publish(
+            new TicketAssignedEvent(
+                command.ticketId,
+                command.dto.userId,
+                command.actorId,
+            ),
+        );
 
         return { id: command.ticketId, success: true };
     }

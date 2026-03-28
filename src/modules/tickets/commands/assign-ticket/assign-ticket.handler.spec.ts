@@ -1,3 +1,4 @@
+import { EventBus } from '@nestjs/cqrs';
 import { UserRole } from '../../../auth/entities/user.entity';
 import { AssignTicketCommand } from './assign-ticket.command';
 import { AssignTicketHandler } from './assign-ticket.handler';
@@ -11,13 +12,13 @@ describe('AssignTicketHandler', () => {
         const policyService = {
             assertCanAssign: jest.fn(),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new AssignTicketHandler(
             ticketRepository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         const result = await handler.execute(
@@ -34,6 +35,6 @@ describe('AssignTicketHandler', () => {
         expect(result).toEqual({ id: 1, success: true });
         expect(policyService.assertCanAssign).toHaveBeenCalledWith(UserRole.SUPPORT);
         expect(ticketRepository.assign).toHaveBeenCalledWith(1, 2);
-        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
+        expect(eventBus.publish).toHaveBeenCalledTimes(1);
     });
 });

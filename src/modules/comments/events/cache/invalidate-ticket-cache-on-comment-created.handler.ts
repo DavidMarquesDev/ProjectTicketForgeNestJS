@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { TicketReadCacheService } from '../../tickets/services/ticket-read-cache.service';
-import { CommentCreatedEvent } from './comment-created.event';
+import { TicketReadCacheService } from '../../../tickets/services/ticket-read-cache.service';
+import { CommentCreatedEvent } from '../contracts';
 
 @EventsHandler(CommentCreatedEvent)
 export class InvalidateTicketCacheOnCommentCreatedHandler implements IEventHandler<CommentCreatedEvent> {
@@ -10,4 +10,3 @@ export class InvalidateTicketCacheOnCommentCreatedHandler implements IEventHandl
         this.ticketReadCacheService.invalidate(event.ticketId);
     }
 }
-

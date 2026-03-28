@@ -1,9 +1,8 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { CreateTicketCommand } from './create-ticket.command';
-import { OutboxService } from '../../../outbox/outbox.service';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../repositories/ticket.repository.interface';
-import { TicketCreatedEvent } from '../../events/ticket-created.event';
+import { TicketCreatedEvent } from '../../events/contracts';
 
 @CommandHandler(CreateTicketCommand)
 export class CreateTicketHandler implements ICommandHandler<CreateTicketCommand> {
@@ -11,7 +10,6 @@ export class CreateTicketHandler implements ICommandHandler<CreateTicketCommand>
         @Inject(TICKET_REPOSITORY)
         private readonly ticketRepository: ITicketRepository,
         private readonly eventBus: EventBus,
-        private readonly outboxService: OutboxService,
     ) {}
 
     /**
@@ -28,15 +26,6 @@ export class CreateTicketHandler implements ICommandHandler<CreateTicketCommand>
         });
 
         this.eventBus.publish(new TicketCreatedEvent(ticket.id, command.createdBy));
-        await this.outboxService.createPendingEvent({
-            eventName: 'TicketCreatedEvent',
-            aggregateType: 'ticket',
-            aggregateId: ticket.id.toString(),
-            payload: {
-                ticketId: ticket.id,
-                createdBy: command.createdBy,
-            },
-        });
 
         return { id: ticket.id, success: true };
     }

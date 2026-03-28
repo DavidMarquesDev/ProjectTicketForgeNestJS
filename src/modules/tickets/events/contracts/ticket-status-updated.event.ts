@@ -1,4 +1,4 @@
-import { TicketStatus } from '../entities/ticket-status.enum';
+import { TicketStatus } from '../../entities/ticket-status.enum';
 
 export class TicketStatusUpdatedEvent {
     constructor(

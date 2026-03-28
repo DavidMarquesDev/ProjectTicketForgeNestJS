@@ -1,7 +1,7 @@
 import { Inject, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { AuditTrailService } from '../../../audit/services/audit-trail.service';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateCommentCommand } from './update-comment.command';
+import { CommentUpdatedEvent } from '../../events/contracts';
 import { CommentPolicyService } from '../../policies/comment-policy.service';
 import { COMMENT_REPOSITORY, type ICommentRepository } from '../../repositories/comment.repository.interface';
 
@@ -11,7 +11,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
         @Inject(COMMENT_REPOSITORY)
         private readonly commentRepository: ICommentRepository,
         private readonly policyService: CommentPolicyService,
-        private readonly auditTrailService: AuditTrailService,
+        private readonly eventBus: EventBus,
     ) {}
 
     /**
@@ -32,15 +32,13 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
         comment.content = command.dto.content;
         const savedComment = await this.commentRepository.save(comment);
-        await this.auditTrailService.record({
-            action: 'comment_updated',
-            aggregateType: 'comment',
-            aggregateId: savedComment.id.toString(),
-            actorId: command.actorId,
-            metadata: {
-                ticketId: command.ticketId,
-            },
-        });
+        this.eventBus.publish(
+            new CommentUpdatedEvent(
+                savedComment.id,
+                command.ticketId,
+                command.actorId,
+            ),
+        );
 
         return { id: savedComment.id, success: true };
     }

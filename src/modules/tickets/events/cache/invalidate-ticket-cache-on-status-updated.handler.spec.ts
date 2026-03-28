@@ -1,7 +1,7 @@
-import { TicketStatus } from '../entities/ticket-status.enum';
-import { TicketReadCacheService } from '../services/ticket-read-cache.service';
+import { TicketStatus } from '../../entities/ticket-status.enum';
+import { TicketReadCacheService } from '../../services/ticket-read-cache.service';
 import { InvalidateTicketCacheOnStatusUpdatedHandler } from './invalidate-ticket-cache-on-status-updated.handler';
-import { TicketStatusUpdatedEvent } from './ticket-status-updated.event';
+import { TicketStatusUpdatedEvent } from '../contracts';
 
 describe('InvalidateTicketCacheOnStatusUpdatedHandler', () => {
     it('deve invalidar cache do ticket ao atualizar status', async () => {
@@ -17,4 +17,3 @@ describe('InvalidateTicketCacheOnStatusUpdatedHandler', () => {
         expect(cacheService.invalidate).toHaveBeenCalledWith(15);
     });
 });
-

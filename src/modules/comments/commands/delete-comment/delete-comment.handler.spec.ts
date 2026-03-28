@@ -1,4 +1,5 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { UserRole } from '../../../auth/entities/user.entity';
 import { DeleteCommentCommand } from './delete-comment.command';
 import { DeleteCommentHandler } from './delete-comment.handler';
@@ -16,13 +17,13 @@ describe('DeleteCommentHandler', () => {
         const policyService = {
             assertCanDelete: jest.fn(),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new DeleteCommentHandler(
             repository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         const result = await handler.execute(new DeleteCommentCommand(7, 12, 5, UserRole.USER));
@@ -34,7 +35,7 @@ describe('DeleteCommentHandler', () => {
             5,
             UserRole.USER,
         );
-        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
+        expect(eventBus.publish).toHaveBeenCalledTimes(1);
     });
 
     it('deve lançar not found quando comentário não estiver no ticket', async () => {
@@ -49,13 +50,13 @@ describe('DeleteCommentHandler', () => {
         const policyService = {
             assertCanDelete: jest.fn(),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new DeleteCommentHandler(
             repository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         await expect(handler.execute(new DeleteCommentCommand(7, 12, 5, UserRole.USER))).rejects.toThrow(
@@ -79,13 +80,13 @@ describe('DeleteCommentHandler', () => {
                 throw new ForbiddenException('Usuário não possui permissão para excluir comentário');
             }),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new DeleteCommentHandler(
             repository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         await expect(

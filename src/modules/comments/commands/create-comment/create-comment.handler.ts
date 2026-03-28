@@ -1,10 +1,9 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
-import { OutboxService } from '../../../outbox/outbox.service';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../../tickets/repositories/ticket.repository.interface';
 import { CreateCommentCommand } from './create-comment.command';
 import { COMMENT_REPOSITORY, type ICommentRepository } from '../../repositories/comment.repository.interface';
-import { CommentCreatedEvent } from '../../events/comment-created.event';
+import { CommentCreatedEvent } from '../../events/contracts';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler implements ICommandHandler<CreateCommentCommand> {
@@ -14,7 +13,6 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
         @Inject(TICKET_REPOSITORY)
         private readonly ticketRepository: ITicketRepository,
         private readonly eventBus: EventBus,
-        private readonly outboxService: OutboxService,
     ) {}
 
     /**
@@ -37,16 +35,6 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
         });
 
         this.eventBus.publish(new CommentCreatedEvent(comment.id, command.ticketId, command.authorId));
-        await this.outboxService.createPendingEvent({
-            eventName: 'CommentCreatedEvent',
-            aggregateType: 'comment',
-            aggregateId: comment.id.toString(),
-            payload: {
-                commentId: comment.id,
-                ticketId: command.ticketId,
-                authorId: command.authorId,
-            },
-        });
 
         return { id: comment.id, success: true };
     }

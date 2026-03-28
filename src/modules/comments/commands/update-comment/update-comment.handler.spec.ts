@@ -1,4 +1,5 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { UserRole } from '../../../auth/entities/user.entity';
 import { UpdateCommentCommand } from './update-comment.command';
 import { UpdateCommentHandler } from './update-comment.handler';
@@ -17,13 +18,13 @@ describe('UpdateCommentHandler', () => {
         const policyService = {
             assertCanUpdate: jest.fn(),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new UpdateCommentHandler(
             repository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         const result = await handler.execute(
@@ -48,7 +49,7 @@ describe('UpdateCommentHandler', () => {
             5,
             UserRole.USER,
         );
-        expect(auditTrailService.record).toHaveBeenCalledTimes(1);
+        expect(eventBus.publish).toHaveBeenCalledTimes(1);
     });
 
     it('deve lançar not found quando comentário não existir no ticket', async () => {
@@ -64,13 +65,13 @@ describe('UpdateCommentHandler', () => {
         const policyService = {
             assertCanUpdate: jest.fn(),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new UpdateCommentHandler(
             repository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         await expect(
@@ -103,13 +104,13 @@ describe('UpdateCommentHandler', () => {
                 throw new ForbiddenException('Usuário não possui permissão para editar comentário');
             }),
         };
-        const auditTrailService = {
-            record: jest.fn(),
-        };
+        const eventBus = {
+            publish: jest.fn(),
+        } as unknown as EventBus;
         const handler = new UpdateCommentHandler(
             repository as never,
             policyService as never,
-            auditTrailService as never,
+            eventBus,
         );
 
         await expect(

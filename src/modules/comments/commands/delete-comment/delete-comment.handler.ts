@@ -1,7 +1,7 @@
 import { Inject, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { AuditTrailService } from '../../../audit/services/audit-trail.service';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteCommentCommand } from './delete-comment.command';
+import { CommentDeletedEvent } from '../../events/contracts';
 import { CommentPolicyService } from '../../policies/comment-policy.service';
 import { COMMENT_REPOSITORY, type ICommentRepository } from '../../repositories/comment.repository.interface';
 
@@ -11,7 +11,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
         @Inject(COMMENT_REPOSITORY)
         private readonly commentRepository: ICommentRepository,
         private readonly policyService: CommentPolicyService,
-        private readonly auditTrailService: AuditTrailService,
+        private readonly eventBus: EventBus,
     ) {}
 
     /**
@@ -31,15 +31,13 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
         this.policyService.assertCanDelete(comment, command.actorId, command.actorRole);
 
         await this.commentRepository.deleteById(comment.id);
-        await this.auditTrailService.record({
-            action: 'comment_deleted',
-            aggregateType: 'comment',
-            aggregateId: comment.id.toString(),
-            actorId: command.actorId,
-            metadata: {
-                ticketId: command.ticketId,
-            },
-        });
+        this.eventBus.publish(
+            new CommentDeletedEvent(
+                comment.id,
+                command.ticketId,
+                command.actorId,
+            ),
+        );
 
         return { id: comment.id, success: true };
     }

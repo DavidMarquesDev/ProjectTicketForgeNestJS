@@ -7,8 +7,12 @@ import { AssignTicketHandler } from './commands/assign-ticket/assign-ticket.hand
 import { CreateTicketHandler } from './commands/create-ticket/create-ticket.handler';
 import { UpdateStatusHandler } from './commands/update-status/update-status.handler';
 import { TicketStatusTransitionService } from './domain/ticket-status-transition.service';
-import { InvalidateTicketCacheOnStatusUpdatedHandler } from './events/invalidate-ticket-cache-on-status-updated.handler';
-import { SendNotificationHandler } from './events/send-notification.handler';
+import { AuditTicketAssignedHandler } from './events/audit/audit-ticket-assigned.handler';
+import { AuditTicketStatusUpdatedHandler } from './events/audit/audit-ticket-status-updated.handler';
+import { InvalidateTicketCacheOnStatusUpdatedHandler } from './events/cache/invalidate-ticket-cache-on-status-updated.handler';
+import { SendNotificationHandler } from './events/notification/send-notification.handler';
+import { EnqueueTicketCreatedOutboxHandler } from './events/outbox/enqueue-ticket-created-outbox.handler';
+import { EnqueueTicketStatusUpdatedOutboxHandler } from './events/outbox/enqueue-ticket-status-updated-outbox.handler';
 import { Ticket } from './entities/ticket.entity';
 import { TicketPolicyService } from './policies/ticket-policy.service';
 import { GetTicketHandler } from './queries/get-ticket/get-ticket.handler';
@@ -20,7 +24,14 @@ import { TicketsController } from './tickets.controller';
 
 const commandHandlers = [CreateTicketHandler, UpdateStatusHandler, AssignTicketHandler];
 const queryHandlers = [GetTicketsHandler, GetTicketHandler];
-const eventHandlers = [SendNotificationHandler, InvalidateTicketCacheOnStatusUpdatedHandler];
+const eventHandlers = [
+    SendNotificationHandler,
+    InvalidateTicketCacheOnStatusUpdatedHandler,
+    AuditTicketAssignedHandler,
+    AuditTicketStatusUpdatedHandler,
+    EnqueueTicketCreatedOutboxHandler,
+    EnqueueTicketStatusUpdatedOutboxHandler,
+];
 
 @Module({
     imports: [CqrsModule, TypeOrmModule.forFeature([Ticket]), OutboxModule, IdempotencyModule],

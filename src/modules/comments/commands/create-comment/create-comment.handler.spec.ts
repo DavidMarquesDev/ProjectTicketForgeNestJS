@@ -20,14 +20,10 @@ describe('CreateCommentHandler', () => {
         const eventBus = {
             publish: jest.fn(),
         } as unknown as EventBus;
-        const outboxService = {
-            createPendingEvent: jest.fn(),
-        };
         const handler = new CreateCommentHandler(
             commentRepository as never,
             ticketRepository as never,
             eventBus,
-            outboxService as never,
         );
 
         const result = await handler.execute(
@@ -42,7 +38,6 @@ describe('CreateCommentHandler', () => {
 
         expect(result).toEqual({ id: 20, success: true });
         expect(eventBus.publish).toHaveBeenCalled();
-        expect(outboxService.createPendingEvent).toHaveBeenCalled();
     });
 
     it('deve falhar quando ticket não existir', async () => {
@@ -55,14 +50,10 @@ describe('CreateCommentHandler', () => {
         const eventBus = {
             publish: jest.fn(),
         } as unknown as EventBus;
-        const outboxService = {
-            createPendingEvent: jest.fn(),
-        };
         const handler = new CreateCommentHandler(
             commentRepository as never,
             ticketRepository as never,
             eventBus,
-            outboxService as never,
         );
 
         await expect(

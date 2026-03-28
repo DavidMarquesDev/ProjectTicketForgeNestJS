@@ -1,5 +1,5 @@
-import { TicketReadCacheService } from '../../tickets/services/ticket-read-cache.service';
-import { CommentCreatedEvent } from './comment-created.event';
+import { TicketReadCacheService } from '../../../tickets/services/ticket-read-cache.service';
+import { CommentCreatedEvent } from '../contracts';
 import { InvalidateTicketCacheOnCommentCreatedHandler } from './invalidate-ticket-cache-on-comment-created.handler';
 
 describe('InvalidateTicketCacheOnCommentCreatedHandler', () => {
@@ -16,4 +16,3 @@ describe('InvalidateTicketCacheOnCommentCreatedHandler', () => {
         expect(cacheService.invalidate).toHaveBeenCalledWith(21);
     });
 });
-

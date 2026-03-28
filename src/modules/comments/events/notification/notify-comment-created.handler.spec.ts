@@ -1,28 +1,29 @@
 import { Logger } from '@nestjs/common';
-import { SendNotificationHandler } from './send-notification.handler';
-import { TicketCreatedEvent } from './ticket-created.event';
+import { NotifyCommentCreatedHandler } from './notify-comment-created.handler';
+import { CommentCreatedEvent } from '../contracts';
 
-describe('SendNotificationHandler', () => {
+describe('NotifyCommentCreatedHandler', () => {
     it('deve enfileirar solicitação de notificação via outbox e registrar log', async () => {
         const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
         const outboxService = {
             createPendingEvent: jest.fn(),
         };
-        const handler = new SendNotificationHandler(outboxService as never);
+        const handler = new NotifyCommentCreatedHandler(outboxService as never);
 
-        await handler.handle(new TicketCreatedEvent(10, 2));
+        await handler.handle(new CommentCreatedEvent(20, 10, 3));
 
         expect(outboxService.createPendingEvent).toHaveBeenCalledWith({
-            eventName: 'TicketNotificationRequestedEvent',
+            eventName: 'CommentNotificationRequestedEvent',
             aggregateType: 'notification',
-            aggregateId: '10',
+            aggregateId: '20',
             payload: {
+                commentId: 20,
                 ticketId: 10,
-                createdBy: 2,
+                authorId: 3,
             },
         });
         expect(logSpy).toHaveBeenCalled();
-        expect(logSpy.mock.calls[0]?.[0]).toContain('"action":"ticket_notification_enqueued"');
+        expect(logSpy.mock.calls[0]?.[0]).toContain('"action":"comment_notification_enqueued"');
         logSpy.mockRestore();
     });
 });

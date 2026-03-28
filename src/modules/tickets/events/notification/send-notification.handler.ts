@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { toStructuredLog } from '../../../common/logging/structured-log.helper';
-import { OutboxService } from '../../outbox/outbox.service';
-import { TicketCreatedEvent } from './ticket-created.event';
+import { toStructuredLog } from '../../../../common/logging/structured-log.helper';
+import { OutboxService } from '../../../outbox/outbox.service';
+import { TicketCreatedEvent } from '../contracts';
 
 @EventsHandler(TicketCreatedEvent)
 export class SendNotificationHandler implements IEventHandler<TicketCreatedEvent> {
