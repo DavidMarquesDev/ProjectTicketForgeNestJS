@@ -5,6 +5,8 @@ export declare enum UserRole {
 }
 export declare class User {
     id: number;
+    name: string;
+    cpf: string;
     email: string;
     passwordHash: string;
     role: UserRole;

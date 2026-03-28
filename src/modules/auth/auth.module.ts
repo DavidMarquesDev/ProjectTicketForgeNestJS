@@ -6,11 +6,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { LoginHandler } from './commands/login/login.handler';
 import { LogoutHandler } from './commands/logout/logout.handler';
+import { RegisterHandler } from './commands/register/register.handler';
 import { User } from './entities/user.entity';
 import { GetMeHandler } from './queries/get-me/get-me.handler';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
-const commandHandlers = [LoginHandler, LogoutHandler];
+const commandHandlers = [LoginHandler, LogoutHandler, RegisterHandler];
 const queryHandlers = [GetMeHandler];
 
 @Module({

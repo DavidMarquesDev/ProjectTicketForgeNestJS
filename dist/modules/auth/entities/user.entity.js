@@ -25,6 +25,14 @@ __decorate([
     __metadata("design:type", Number)
 ], User.prototype, "id", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'name', length: 150, nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "name", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'cpf', length: 11, unique: true, nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "cpf", void 0);
+__decorate([
     (0, typeorm_1.Column)({ unique: true, length: 150 }),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);

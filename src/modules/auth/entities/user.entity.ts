@@ -11,6 +11,12 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Column({ name: 'name', length: 150, nullable: true })
+    name: string;
+
+    @Column({ name: 'cpf', length: 11, unique: true, nullable: true })
+    cpf: string;
+
     @Column({ unique: true, length: 150 })
     email: string;
 

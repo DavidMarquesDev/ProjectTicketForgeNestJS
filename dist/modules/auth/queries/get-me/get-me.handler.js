@@ -26,7 +26,7 @@ let GetMeHandler = class GetMeHandler {
     async execute(query) {
         const user = await this.userRepository.findOne({
             where: { id: query.userId },
-            select: ['id', 'email', 'role', 'createdAt', 'updatedAt'],
+            select: ['id', 'name', 'cpf', 'email', 'role', 'createdAt', 'updatedAt'],
         });
         if (!user) {
             throw new common_1.NotFoundException('Usuário não encontrado');

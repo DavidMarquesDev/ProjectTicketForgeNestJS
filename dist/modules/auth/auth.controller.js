@@ -20,7 +20,9 @@ const current_user_decorator_1 = require("../../common/decorators/current-user.d
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const login_command_1 = require("./commands/login/login.command");
 const logout_command_1 = require("./commands/logout/logout.command");
+const register_command_1 = require("./commands/register/register.command");
 const login_dto_1 = require("./dto/login.dto");
+const register_dto_1 = require("./dto/register.dto");
 const get_me_query_1 = require("./queries/get-me/get-me.query");
 let AuthController = class AuthController {
     constructor(commandBus, queryBus) {
@@ -29,6 +31,9 @@ let AuthController = class AuthController {
     }
     login(dto) {
         return this.commandBus.execute(new login_command_1.LoginCommand(dto.email, dto.password));
+    }
+    register(dto) {
+        return this.commandBus.execute(new register_command_1.RegisterCommand(dto.name, dto.cpf, dto.email, dto.password));
     }
     logout(user) {
         return this.commandBus.execute(new logout_command_1.LogoutCommand(user.id));
@@ -45,6 +50,13 @@ __decorate([
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('register'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),

@@ -15,10 +15,11 @@ const typeorm_1 = require("@nestjs/typeorm");
 const auth_controller_1 = require("./auth.controller");
 const login_handler_1 = require("./commands/login/login.handler");
 const logout_handler_1 = require("./commands/logout/logout.handler");
+const register_handler_1 = require("./commands/register/register.handler");
 const user_entity_1 = require("./entities/user.entity");
 const get_me_handler_1 = require("./queries/get-me/get-me.handler");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
-const commandHandlers = [login_handler_1.LoginHandler, logout_handler_1.LogoutHandler];
+const commandHandlers = [login_handler_1.LoginHandler, logout_handler_1.LogoutHandler, register_handler_1.RegisterHandler];
 const queryHandlers = [get_me_handler_1.GetMeHandler];
 let AuthModule = class AuthModule {
 };

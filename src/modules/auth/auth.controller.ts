@@ -5,7 +5,9 @@ import { CurrentUser, type AuthenticatedUser } from '../../common/decorators/cur
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { LoginCommand } from './commands/login/login.command';
 import { LogoutCommand } from './commands/logout/logout.command';
+import { RegisterCommand } from './commands/register/register.command';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { GetMeQuery } from './queries/get-me/get-me.query';
 
 @ApiTags('auth')
@@ -19,6 +21,11 @@ export class AuthController {
     @Post('login')
     login(@Body() dto: LoginDto) {
         return this.commandBus.execute(new LoginCommand(dto.email, dto.password));
+    }
+
+    @Post('register')
+    register(@Body() dto: RegisterDto) {
+        return this.commandBus.execute(new RegisterCommand(dto.name, dto.cpf, dto.email, dto.password));
     }
 
     @UseGuards(JwtAuthGuard)
