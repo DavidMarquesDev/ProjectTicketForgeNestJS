@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -17,10 +18,16 @@ const queryHandlers = [GetMeHandler];
 @Module({
     imports: [
         CqrsModule,
+        ConfigModule,
         PassportModule,
-        JwtModule.register({
-            secret: process.env.JWT_SECRET ?? 'dev-secret',
-            signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' },
+        JwtModule.registerAsync({
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService) => ({
+                secret: configService.get<string>('JWT_SECRET') ?? 'dev-secret',
+                signOptions: {
+                    expiresIn: configService.get<string>('JWT_EXPIRES_IN') ?? '7d',
+                },
+            }),
         }),
         TypeOrmModule.forFeature([User]),
     ],

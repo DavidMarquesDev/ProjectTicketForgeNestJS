@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
 const cqrs_1 = require("@nestjs/cqrs");
+const config_1 = require("@nestjs/config");
 const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const typeorm_1 = require("@nestjs/typeorm");
@@ -28,10 +29,16 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             cqrs_1.CqrsModule,
+            config_1.ConfigModule,
             passport_1.PassportModule,
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET ?? 'dev-secret',
-                signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' },
+            jwt_1.JwtModule.registerAsync({
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    secret: configService.get('JWT_SECRET') ?? 'dev-secret',
+                    signOptions: {
+                        expiresIn: configService.get('JWT_EXPIRES_IN') ?? '7d',
+                    },
+                }),
             }),
             typeorm_1.TypeOrmModule.forFeature([user_entity_1.User]),
         ],
