@@ -28,13 +28,13 @@ export class OutboxEvent {
     @Column({ default: 0 })
     attempts: number;
 
-    @Column({ name: 'available_at', type: 'datetime' })
+    @Column({ name: 'available_at', type: Date })
     availableAt: Date;
 
-    @Column({ name: 'queued_at', type: 'datetime', nullable: true })
+    @Column({ name: 'queued_at', type: Date, nullable: true })
     queuedAt: Date | null;
 
-    @Column({ name: 'processed_at', type: 'datetime', nullable: true })
+    @Column({ name: 'processed_at', type: Date, nullable: true })
     processedAt: Date | null;
 
     @Column({ name: 'last_error', type: 'text', nullable: true })
