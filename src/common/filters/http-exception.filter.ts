@@ -4,13 +4,16 @@ import {
     ExceptionFilter,
     HttpException,
     HttpStatus,
+    Logger,
     ValidationError,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { toStructuredLog } from '../logging/structured-log.helper';
 import { ApiErrorResponse } from '../response/api-response';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+    private readonly logger = new Logger(HttpExceptionFilter.name);
     private readonly statusCodeMap: Record<number, string> = {
         [HttpStatus.BAD_REQUEST]: 'BAD_REQUEST',
         [HttpStatus.UNAUTHORIZED]: 'UNAUTHORIZED',
@@ -74,6 +77,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
             errors,
             trace_id: request.headers['x-request-id'] as string | undefined,
         };
+
+        this.logger.error(
+            toStructuredLog({
+                level: 'error',
+                action: 'http_exception',
+                context: {
+                    status,
+                    code,
+                    message,
+                    method: request.method,
+                    path: request.url,
+                    trace_id: errorPayload.trace_id,
+                },
+            }),
+        );
 
         response.status(status).json(errorPayload);
     }

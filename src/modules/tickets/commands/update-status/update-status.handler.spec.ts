@@ -25,11 +25,15 @@ describe('UpdateStatusHandler', () => {
         const eventBus = {
             publish: jest.fn(),
         } as unknown as EventBus;
+        const outboxService = {
+            createPendingEvent: jest.fn(),
+        };
         const handler = new UpdateStatusHandler(
             ticketRepository as never,
             policyService as never,
             statusTransitionService as never,
             eventBus,
+            outboxService as never,
         );
 
         const result = await handler.execute(
@@ -39,5 +43,6 @@ describe('UpdateStatusHandler', () => {
         expect(result).toEqual({ id: 1, success: true });
         expect(ticketRepository.save).toHaveBeenCalled();
         expect(eventBus.publish).toHaveBeenCalled();
+        expect(outboxService.createPendingEvent).toHaveBeenCalled();
     });
 });

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { User } from '../modules/auth/entities/user.entity';
 import { Comment } from '../modules/comments/entities/comment.entity';
+import { OutboxEvent } from '../modules/outbox/entities/outbox-event.entity';
 import { Ticket } from '../modules/tickets/entities/ticket.entity';
 
 if (!process.env.DATABASE_URL) {
@@ -15,7 +16,7 @@ const migrationsPath = __filename.endsWith('.ts')
 export default new DataSource({
     type: 'postgres',
     url: process.env.DATABASE_URL,
-    entities: [User, Ticket, Comment],
+    entities: [User, Ticket, Comment, OutboxEvent],
     migrations: migrationsPath,
     synchronize: false,
 });

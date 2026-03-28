@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateStatusCommand } from './update-status.command';
+import { OutboxService } from '../../../outbox/outbox.service';
 import { TicketPolicyService } from '../../policies/ticket-policy.service';
 import { TicketStatusTransitionService } from '../../domain/ticket-status-transition.service';
 import { TICKET_REPOSITORY, type ITicketRepository } from '../../repositories/ticket.repository.interface';
@@ -14,6 +15,7 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
         private readonly policyService: TicketPolicyService,
         private readonly statusTransitionService: TicketStatusTransitionService,
         private readonly eventBus: EventBus,
+        private readonly outboxService: OutboxService,
     ) {}
 
     /**
@@ -34,6 +36,16 @@ export class UpdateStatusHandler implements ICommandHandler<UpdateStatusCommand>
         this.eventBus.publish(
             new TicketStatusUpdatedEvent(command.ticketId, command.status, command.actorId),
         );
+        await this.outboxService.createPendingEvent({
+            eventName: 'TicketStatusUpdatedEvent',
+            aggregateType: 'ticket',
+            aggregateId: command.ticketId.toString(),
+            payload: {
+                ticketId: command.ticketId,
+                status: command.status,
+                updatedBy: command.actorId,
+            },
+        });
 
         return { id: ticket.id, success: true };
     }

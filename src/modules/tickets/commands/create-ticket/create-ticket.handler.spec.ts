@@ -28,12 +28,16 @@ describe('CreateTicketHandler', () => {
         const eventBus = {
             publish: jest.fn(),
         } as unknown as EventBus;
-        const handler = new CreateTicketHandler(repository, eventBus);
+        const outboxService = {
+            createPendingEvent: jest.fn(),
+        };
+        const handler = new CreateTicketHandler(repository, eventBus, outboxService as never);
 
         const result = await handler.execute(new CreateTicketCommand('Título', 'Descrição detalhada', 1));
 
         expect(result).toEqual({ id: 1, success: true });
         expect(repository.createAndSave).toHaveBeenCalled();
         expect(eventBus.publish).toHaveBeenCalled();
+        expect(outboxService.createPendingEvent).toHaveBeenCalled();
     });
 });
